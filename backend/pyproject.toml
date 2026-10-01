@@ -1,0 +1,26 @@
+[project]
+name = "device-lab-backend"
+version = "0.1.0"
+description = "Device management API under test (FastAPI + PostgreSQL)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<0.116",
+    "uvicorn>=0.34,<0.35",
+    "sqlalchemy>=2.0,<2.1",
+    "psycopg[binary]>=3.2,<3.3",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15,<0.16",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/W pycodestyle, F pyflakes, I isort, B bugbear, UP pyupgrade
+select = ["E", "W", "F", "I", "B", "UP"]
+# B008: FastAPI's `Depends(...)` in default args is the intended pattern
+ignore = ["B008"]

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+frontend/dist/
+
+# SeleniumBase / test output
+latest_logs/
+archived_logs/
+downloaded_files/
+archived_files/
+report/
+reports/
+
+# Env / editors / OS
+.env
+.idea/
+.vscode/
+.DS_Store
