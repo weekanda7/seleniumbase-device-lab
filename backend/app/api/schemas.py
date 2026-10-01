@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, StringConstraints, field_validator
 
 DeviceType = Literal["Router", "Switch", "AP", "Sensor"]
+DeviceStatus = Literal["online", "offline"]
 DeviceName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)]
 Location = Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)]
 
@@ -24,6 +25,7 @@ class DeviceCreate(BaseModel):
 
     name: DeviceName
     type: DeviceType
+    status: DeviceStatus = "online"
     location: Location = ""
 
 
@@ -38,9 +40,10 @@ class DevicePatch(BaseModel):
 
     name: DeviceName | None = None
     type: DeviceType | None = None
+    status: DeviceStatus | None = None
     location: Location | None = None
 
-    @field_validator("name", "type", "location")
+    @field_validator("name", "type", "status", "location")
     @classmethod
     def reject_explicit_null(cls, value):
         # Runs only for fields the client actually sent, so {"name": null} -> 422.
@@ -55,5 +58,6 @@ class DeviceOut(BaseModel):
     id: int
     name: str
     type: str
+    status: str
     location: str
     created_at: datetime

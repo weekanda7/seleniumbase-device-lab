@@ -17,17 +17,28 @@ export class ApiError extends Error {
   }
 }
 
+export type DeviceStatus = "online" | "offline";
+
 export type Device = {
   id: number;
   name: string;
   type: string;
+  status: DeviceStatus;
   location: string;
   created_at: string;
 };
 
-export type DeviceInput = { name: string; type: string; location: string };
+export type DeviceInput = {
+  name: string;
+  type: string;
+  status: DeviceStatus;
+  location: string;
+};
+
+export type DeviceQuery = { q?: string; status?: DeviceStatus };
 
 export const DEVICE_TYPES = ["Router", "Switch", "AP", "Sensor"];
+export const DEVICE_STATUSES: DeviceStatus[] = ["online", "offline"];
 
 // FastAPI returns `detail` as a string (our errors) or a list (422 validation errors).
 function toMessage(detail: unknown): string {
@@ -63,6 +74,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
+function toQueryString(query: DeviceQuery): string {
+  const params = new URLSearchParams();
+  if (query.q) params.set("q", query.q);
+  if (query.status) params.set("status", query.status);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export const api = {
   login: (username: string, password: string) =>
     request<{ access_token: string }>("/auth/login", {
@@ -70,9 +89,14 @@ export const api = {
       body: JSON.stringify({ username, password }),
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
-  listDevices: () => request<Device[]>("/devices"),
+  listDevices: (query: DeviceQuery = {}) => request<Device[]>(`/devices${toQueryString(query)}`),
   getDevice: (id: string) => request<Device>(`/devices/${id}`),
   createDevice: (input: DeviceInput) =>
     request<Device>("/devices", { method: "POST", body: JSON.stringify(input) }),
+  updateDevice: (id: number, changes: Partial<DeviceInput>) =>
+    request<Device>(`/devices/${id}`, { method: "PATCH", body: JSON.stringify(changes) }),
   deleteDevice: (id: number) => request<void>(`/devices/${id}`, { method: "DELETE" }),
 };
+
+// antd's *ButtonProps don't declare data-* attributes; spread this in to add a test id.
+export const testId = (id: string) => ({ "data-testid": id }) as Record<string, string>;

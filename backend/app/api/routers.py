@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app.api.schemas import DeviceCreate, DeviceOut, DevicePatch, DeviceReplace, LoginIn, LoginOut
+from app.api.schemas import DeviceCreate, DeviceOut, DevicePatch, DeviceReplace, DeviceStatus, LoginIn, LoginOut
 from app.application import auth_service
 from app.application.device_service import DeviceService
 from app.exceptions import InvalidCredentials, Unauthorized
@@ -46,8 +46,12 @@ devices = APIRouter(prefix="/devices", tags=["devices"], dependencies=[Depends(r
 
 
 @devices.get("", response_model=list[DeviceOut])
-def list_devices(service: DeviceService = Depends(get_device_service)):
-    return service.list_devices()
+def list_devices(
+    q: str | None = Query(None, max_length=50, description="Search name or location (case-insensitive)"),
+    device_status: DeviceStatus | None = Query(None, alias="status"),
+    service: DeviceService = Depends(get_device_service),
+):
+    return service.list_devices(q=q, status=device_status)
 
 
 @devices.get("/{device_id}", response_model=DeviceOut)

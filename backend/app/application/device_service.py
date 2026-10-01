@@ -15,8 +15,8 @@ class DeviceService:
         self.db = db
         self.repo = DeviceRepository(db)
 
-    def list_devices(self) -> list[Device]:
-        return self.repo.list()
+    def list_devices(self, q: str | None = None, status: str | None = None) -> list[Device]:
+        return self.repo.list(q=q, status=status)
 
     def get_device(self, device_id: int) -> Device:
         device = self.repo.get(device_id)
@@ -24,9 +24,9 @@ class DeviceService:
             raise DeviceNotFound(device_id)
         return device
 
-    def create_device(self, name: str, type: str, location: str = "") -> Device:
+    def create_device(self, name: str, type: str, status: str = "online", location: str = "") -> Device:
         self._ensure_name_free(name)
-        device = self.repo.add(Device(name=name, type=type, location=location))
+        device = self.repo.add(Device(name=name, type=type, status=status, location=location))
         self._commit(name)
         self.db.refresh(device)
         return device

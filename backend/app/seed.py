@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from app.domain.models import Device
 
 SEED_DEVICES = [
-    {"name": "core-router-01", "type": "Router", "location": "Server room"},
-    {"name": "office-switch-01", "type": "Switch", "location": "3F office"},
-    {"name": "lobby-ap-01", "type": "AP", "location": "1F lobby"},
+    {"name": "core-router-01", "type": "Router", "status": "online", "location": "Server room"},
+    {"name": "office-switch-01", "type": "Switch", "status": "online", "location": "3F office"},
+    {"name": "lobby-ap-01", "type": "AP", "status": "offline", "location": "1F lobby"},
 ]
 
 

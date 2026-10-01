@@ -1,159 +1,74 @@
-:root {
-  --bg: #f6f7f9;
-  --surface: #ffffff;
-  --text: #1d232b;
-  --muted: #667085;
-  --border: #d9dde3;
-  --primary: #2459d6;
-  --danger: #c4302b;
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    sans-serif;
-  color: var(--text);
-  background: var(--bg);
-}
-
-* {
-  box-sizing: border-box;
-}
+/* antd handles component styling; this file is only page layout. */
 body {
   margin: 0;
+  background: #f5f6f8;
 }
-h1 {
-  font-size: 1.5rem;
-  margin: 0 0 1rem;
+
+.app-layout {
+  min-height: 100vh;
 }
 
 .topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1.5rem;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 24px;
 }
+
 .brand {
   font-weight: 700;
-  color: var(--text);
-  text-decoration: none;
+  font-size: 16px;
+  color: #1d232b;
 }
 
 .container {
-  max-width: 880px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 24px auto;
+  padding: 0 16px;
 }
+
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 12px;
 }
-.page-header h1 {
+
+.page-header h3 {
   margin: 0;
 }
 
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 1rem;
+.toolbar {
+  margin-bottom: 16px;
+}
+
+.form-alert {
+  margin: 12px 0;
+}
+
+.detail-card {
+  margin-top: 16px;
+}
+
+.detail-actions {
+  margin-top: 16px;
 }
 
 .login-page {
   min-height: 100vh;
   display: grid;
   place-items: center;
-}
-.login-page .card {
-  width: 340px;
+  padding: 16px;
 }
 
-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-top: 0.5rem;
-}
-input,
-select {
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font: inherit;
-}
-
-button,
-.button {
-  display: inline-block;
-  padding: 0.55rem 1rem;
-  border: 1px solid var(--primary);
-  border-radius: 6px;
-  background: var(--primary);
-  color: #fff;
-  font: inherit;
-  text-decoration: none;
-  cursor: pointer;
-}
-button:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-.secondary {
-  background: var(--surface);
-  color: var(--text);
-  border-color: var(--border);
-}
-.danger {
-  background: var(--danger);
-  border-color: var(--danger);
-  align-self: flex-start;
-}
-.actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.error {
-  color: var(--danger);
-  margin: 0.5rem 0;
-}
-.muted {
-  color: var(--muted);
-}
-
-table {
+.login-card {
   width: 100%;
-  border-collapse: collapse;
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
-th,
-td {
-  text-align: left;
-  padding: 0.6rem 0.8rem;
-  border-bottom: 1px solid var(--border);
-}
-th {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  color: var(--muted);
+  max-width: 380px;
 }
 
-dl {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 0.4rem 1rem;
-  margin: 0 0 1rem;
-}
-dt {
-  color: var(--muted);
-}
-dd {
-  margin: 0;
+.detail-nav {
+  margin-bottom: 8px;
 }

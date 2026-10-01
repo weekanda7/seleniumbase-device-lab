@@ -1,26 +1,34 @@
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { Alert, Button, Card, Form, Input, Typography } from "antd";
+import { useTranslation } from "react-i18next";
 import { api, ApiError, auth } from "../api";
+import LanguageSwitch from "../components/LanguageSwitch";
+import FieldLabel from "../components/FieldLabel";
+
+type LoginValues = { username: string; password: string };
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const { t } = useTranslation();
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   if (auth.get()) return <Navigate to="/devices" replace />;
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function onFinish(values: LoginValues) {
     setError("");
     setSubmitting(true);
     try {
-      const { access_token } = await api.login(username, password);
+      const { access_token } = await api.login(values.username, values.password);
       auth.set(access_token);
       navigate("/devices");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Cannot reach the server");
+      setError(
+        err instanceof ApiError && err.status === 401
+          ? t("login.invalid")
+          : t("common.cannotReach"),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -28,32 +36,39 @@ export default function LoginPage() {
 
   return (
     <main className="login-page">
-      <form className="card" onSubmit={onSubmit} data-testid="login-form">
-        <h1>Device Lab</h1>
-        <label htmlFor="username">Username</label>
-        <input
-          id="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          autoComplete="username"
-        />
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
-        />
-        {error && (
-          <p className="error" role="alert" data-testid="login-error">
-            {error}
-          </p>
-        )}
-        <button type="submit" data-testid="login-button" disabled={submitting}>
-          {submitting ? "Logging in…" : "Log in"}
-        </button>
-      </form>
+      <Card className="login-card" extra={<LanguageSwitch />} title={t("app.title")}>
+        <Typography.Title level={4} data-testid="page-title">
+          {t("login.title")}
+        </Typography.Title>
+        <Form name="login" layout="vertical" onFinish={onFinish} requiredMark={false}>
+          <Form.Item
+            label={<FieldLabel name="username">{t("login.username")}</FieldLabel>}
+            name="username"
+            rules={[{ required: true, message: t("login.usernameRequired") }]}
+          >
+            <Input autoComplete="username" data-testid="username-input" />
+          </Form.Item>
+          <Form.Item
+            label={<FieldLabel name="password">{t("login.password")}</FieldLabel>}
+            name="password"
+            rules={[{ required: true, message: t("login.passwordRequired") }]}
+          >
+            <Input.Password autoComplete="current-password" data-testid="password-input" />
+          </Form.Item>
+          {/* testid spec: red error Alert gets no testid; tests assert on its text. */}
+          {error && <Alert type="error" showIcon message={error} className="form-alert" />}
+          {/* Button text changes with the language, so it gets a testid (spec: unstable text). */}
+          <Button
+            type="primary"
+            htmlType="submit"
+            block
+            loading={submitting}
+            data-testid="login-button"
+          >
+            {t("login.submit")}
+          </Button>
+        </Form>
+      </Card>
     </main>
   );
 }

@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.domain.models import Device
@@ -10,8 +10,15 @@ class DeviceRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def list(self) -> list[Device]:
-        return list(self.db.scalars(select(Device).order_by(Device.id)))
+    def list(self, q: str | None = None, status: str | None = None) -> list[Device]:
+        stmt = select(Device).order_by(Device.id)
+        if q:
+            pattern = f"%{q}%"
+            # ILIKE = case-insensitive LIKE; search both name and location
+            stmt = stmt.where(or_(Device.name.ilike(pattern), Device.location.ilike(pattern)))
+        if status:
+            stmt = stmt.where(Device.status == status)
+        return list(self.db.scalars(stmt))
 
     def get(self, device_id: int) -> Device | None:
         return self.db.get(Device, device_id)

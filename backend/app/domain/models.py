@@ -4,6 +4,7 @@ from sqlalchemy import DateTime, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 DEVICE_TYPES = ("Router", "Switch", "AP", "Sensor")
+DEVICE_STATUSES = ("online", "offline")
 
 
 class Base(DeclarativeBase):
@@ -18,5 +19,6 @@ class Device(Base):
     # (the service checks first so it can return a friendly 409).
     name: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     type: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(10), default="online")
     location: Mapped[str] = mapped_column(String(100), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

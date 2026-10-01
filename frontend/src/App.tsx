@@ -1,13 +1,19 @@
-import { Link, Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useNavigate, Link } from "react-router-dom";
+import { Button, Layout, Space } from "antd";
+import { LogoutOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { api, auth } from "./api";
+import LanguageSwitch from "./components/LanguageSwitch";
 import LoginPage from "./pages/LoginPage";
 import DeviceListPage from "./pages/DeviceListPage";
 import DeviceNewPage from "./pages/DeviceNewPage";
+import DeviceEditPage from "./pages/DeviceEditPage";
 import DeviceDetailPage from "./pages/DeviceDetailPage";
 
 // Pages behind login. No token -> redirect to /login.
 function ProtectedLayout() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   if (!auth.get()) return <Navigate to="/login" replace />;
 
   async function logout() {
@@ -17,19 +23,22 @@ function ProtectedLayout() {
   }
 
   return (
-    <>
-      <header className="topbar">
-        <Link to="/devices" className="brand">
-          Device Lab
+    <Layout className="app-layout">
+      <Layout.Header className="topbar">
+        <Link to="/devices" className="brand" id="logo">
+          {t("app.title")}
         </Link>
-        <button className="secondary" data-testid="logout-button" onClick={logout}>
-          Log out
-        </button>
-      </header>
-      <main className="container">
+        <Space>
+          <LanguageSwitch />
+          <Button icon={<LogoutOutlined />} data-testid="logout-button" onClick={logout}>
+            {t("nav.logout")}
+          </Button>
+        </Space>
+      </Layout.Header>
+      <Layout.Content className="container">
         <Outlet />
-      </main>
-    </>
+      </Layout.Content>
+    </Layout>
   );
 }
 
@@ -41,6 +50,7 @@ export default function App() {
         <Route path="/devices" element={<DeviceListPage />} />
         <Route path="/devices/new" element={<DeviceNewPage />} />
         <Route path="/devices/:id" element={<DeviceDetailPage />} />
+        <Route path="/devices/:id/edit" element={<DeviceEditPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/devices" replace />} />
     </Routes>
