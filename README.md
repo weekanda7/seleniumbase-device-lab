@@ -1,5 +1,7 @@
 # seleniumbase-device-lab
 
+[![CI](https://github.com/weekanda7/seleniumbase-device-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/weekanda7/seleniumbase-device-lab/actions/workflows/ci.yml)
+
 A small device-management web app (FastAPI + PostgreSQL + React) used as the system under test
 for a SeleniumBase / API / DB test suite.
 
