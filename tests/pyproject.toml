@@ -1,0 +1,24 @@
+[project]
+name = "device-lab-tests"
+version = "0.1.0"
+description = "SeleniumBase UI / API / DB tests for the device-lab app"
+requires-python = ">=3.12"
+dependencies = [
+    "seleniumbase>=4.33",
+    "pytest>=8.3",
+    "pytest-xdist>=3.6",
+    "requests>=2.32",
+    "psycopg[binary]>=3.2,<3.3",
+    "ruff>=0.16.9",
+    "python-dotenv>=1.2.4",
+]
+
+[tool.pytest.ini_options]
+# Run from tests/:  uv run pytest   (or `make test` at the repo root)
+addopts = "-ra --strict-markers --import-mode=importlib"
+markers = [
+    "ui: browser tests with SeleniumBase (needs `make up`)",
+    "api: HTTP tests against the backend on :8000",
+    "db: tests that query Postgres on :5433 directly",
+]
+pythonpath = ["."]
