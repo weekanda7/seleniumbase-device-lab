@@ -17,6 +17,7 @@ downloaded_files/
 archived_files/
 report/
 reports/
+last_report.html
 
 # Env / editors / OS
 .env
