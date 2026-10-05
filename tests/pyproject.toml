@@ -15,7 +15,7 @@ dependencies = [
 
 [tool.pytest.ini_options]
 # Run from tests/:  uv run pytest   (or `make test` at the repo root)
-addopts = "-ra --strict-markers --import-mode=importlib"
+addopts = "-ra --strict-markers --import-mode=importlib --window-size=1366,900"
 markers = [
     "ui: browser tests with SeleniumBase (needs `make up`)",
     "api: HTTP tests against the backend on :8000",
