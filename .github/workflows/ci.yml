@@ -38,10 +38,12 @@ jobs:
       - name: Start app (db + backend + web), wait for healthchecks
         run: docker compose up -d --build --wait
       - uses: astral-sh/setup-uv@v6
-      - name: Run tests (headless Chrome)
+      - name: Run tests (headless Chrome, parallel)
         working-directory: tests
+        # -n auto: one worker per CPU. Safe because every test creates its own uuid-named data
+        # and only asserts on it, then deletes it through the API.
         run: >
-          uv run pytest --headless
+          uv run pytest --headless -n auto
           -m "not install_case and not future_case"
           --html=report/report.html --self-contained-html
           --junit-xml=report/report.xml
