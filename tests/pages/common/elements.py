@@ -7,8 +7,22 @@ Rules come from .claude/skills/testid-spec:
 
 
 def tid(test_id: str) -> str:
-    """CSS selector for a data-testid."""
+    """CSS selector for a data-testid. Default for a single element."""
     return f'[data-testid="{test_id}"]'
+
+
+def xtid(test_id: str, tag: str = "*", text: str | None = None) -> str:
+    """XPath step for a data-testid, starting with `//` so it can be appended to another XPath.
+
+    Use it when you need scoping or text, which CSS can't do:
+        xtid("status-option", text="Offline")          -> pick an option by its label
+        f"{row}{xtid('tc-location', tag='td')}"        -> a cell inside one table row
+    CSS and XPath can't be concatenated, so once a locator starts as XPath, keep using xtid().
+    """
+    step = f"//{tag}[@data-testid='{test_id}']"
+    if text is not None:
+        step += f"[normalize-space()='{text}']"
+    return step
 
 
 def within(container: str, child: str) -> str:

@@ -68,6 +68,18 @@ description: data-testid 命名規範（React + Ant Design）。在 frontend/src
 2. 只有全域唯一的元素（Header、`logout-button`、`language-switch`）可直接找
 3. `tc-*` 每列都有：用列索引，或用列內文字找到列（`tr.ant-table-row` 含某文字）；antd 列另有 `data-row-key={id}`
 
+### 6.1 CSS 還是 XPath（測試端，`tests/pages/common/elements.py`）
+
+| 情況 | 用 | 例 |
+|---|---|---|
+| 單一元素、全域唯一或已在容器內 | `tid()`（CSS） | `tid("save-button")` |
+| 要比對文字（選項、列） | `xtid(..., text=)`（XPath） | `xtid("status-option", text="Offline")` |
+| 要先限定在某一列 / 容器再往內找 | `xtid()` 接在 XPath 後面 | `f"{row}{xtid('tc-location', tag='td')}"` |
+| 只能用 class 的 antd 元件 | CSS class | `.ant-table .ant-spin-spinning` |
+
+- CSS 和 XPath **不能串接**：locator 一旦以 XPath 開頭，後面一律用 `xtid()`
+- 不全面改 XPath：XPath 比對 class 只能 `contains(@class, …)`，會誤中相似 class；可讀性也較差
+
 ## 7. antd 實作技巧（本 repo）
 
 | 元件 | 怎麼加 | 測試注意 |

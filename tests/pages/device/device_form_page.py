@@ -1,7 +1,7 @@
 from seleniumbase import BaseCase
 
 from config import Config
-from pages.common.elements import ERROR_ALERT, FIELD_ERROR, tid
+from pages.common.elements import ERROR_ALERT, FIELD_ERROR, tid, xtid
 
 
 class DeviceFormPage:
@@ -34,7 +34,7 @@ class DeviceFormPage:
     @staticmethod
     def select_type(sb: BaseCase, device_type: str) -> None:
         sb.click(DeviceFormPage.type_select)
-        sb.click(f"//*[@data-testid='type-option'][normalize-space()='{device_type}']")
+        sb.click(xtid("type-option", text=device_type))
 
     @staticmethod
     def select_status(sb: BaseCase, status: str) -> None:

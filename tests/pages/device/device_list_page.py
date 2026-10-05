@@ -4,7 +4,7 @@ from seleniumbase import BaseCase
 
 from config import Config
 from pages.common.confirm_modal import ConfirmModal
-from pages.common.elements import TABLE_LOADING, TABLE_ROW, tid
+from pages.common.elements import TABLE_LOADING, TABLE_ROW, tid, xtid
 
 SEARCH_DEBOUNCE_SECONDS = (
     0.4  # frontend waits this long after the last key before calling the API
@@ -50,7 +50,7 @@ class DeviceListPage:
     @staticmethod
     def row_by_name(name: str) -> str:
         """XPath of the table row whose name cell shows `name`."""
-        return f"//tr[contains(@class,'ant-table-row')][.//td[@data-testid='tc-name'][normalize-space()='{name}']]"
+        return f"//tr[contains(@class,'ant-table-row')][.{xtid('tc-name', tag='td', text=name)}]"
 
     # ---------- navigation ----------
     @staticmethod
@@ -95,7 +95,7 @@ class DeviceListPage:
     def filter_status(sb: BaseCase, label: str) -> None:
         """label is the visible text: "Online" / "Offline" (or 上線 / 離線 in Chinese)."""
         sb.click(DeviceListPage.status_select)
-        sb.click(f"//*[@data-testid='status-option'][normalize-space()='{label}']")
+        sb.click(xtid("status-option", text=label))
         sb.wait_for_element_absent(TABLE_LOADING)
 
     @staticmethod
@@ -121,7 +121,7 @@ class DeviceListPage:
     # ---------- row actions ----------
     @staticmethod
     def open_more_menu(sb: BaseCase, name: str) -> None:
-        sb.click(f"{DeviceListPage.row_by_name(name)}//*[@data-testid='more-button']")
+        sb.click(f"{DeviceListPage.row_by_name(name)}{xtid('more-button')}")
         sb.wait_for_element_visible(DeviceListPage.option_edit)
 
     @staticmethod
@@ -151,7 +151,7 @@ class DeviceListPage:
     def get_row(sb: BaseCase, name: str) -> dict[str, str]:
         row = DeviceListPage.row_by_name(name)
         return {
-            col: sb.get_text(f"{row}//td[@data-testid='tc-{col}']").strip()
+            col: sb.get_text(f"{row}{xtid(f'tc-{col}', tag='td')}").strip()
             for col in ("name", "type", "status", "location")
         }
 
