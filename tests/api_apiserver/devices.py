@@ -10,6 +10,9 @@ class DeviceApi:
     def __init__(self, auth: Auth):
         self.session = auth.request
         self.url = f"{Config.API_URL}/devices"
+        self.created_ids: list[
+            int
+        ] = []  # filled by tests, emptied by the `api` fixture
 
     def create(
         self,

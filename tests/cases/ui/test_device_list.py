@@ -19,7 +19,20 @@ class DeviceListTest(AuthCase):
         assert res.status_code == 201, res.text
         self.created_ids.append(res.json()["id"])
 
-    # TODO(Henry): test_search_by_name_or_location_case_insensitive
+    def test_search_by_name_or_location_case_insensitive(self):
+        "[UI][Device list] Search device by name or location"
+        # TODO (Henry) common api func for add test device
+        predix = "nl"
+        name = uuid_name(predix)
+        location = uuid_name("loc")
+        res = self.device_api.create(name=name, location=location)
+        assert res.status_code == 201, res.text
+        self.created_ids.append(res.json()["id"])
+        DeviceListPage.open(self)
+        DeviceListPage.search(self, keyword=name.upper())
+        DeviceListPage.assert_device_names(self, [name])
+        DeviceListPage.search(self, keyword=location)
+        DeviceListPage.assert_device_names(self, [name])
 
     def test_filter_by_status(self):
         "[UI][Device list] 狀態篩選 Offline 只看到離線裝置，清除篩選後恢復"  # 🤝 AI

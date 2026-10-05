@@ -39,6 +39,8 @@ class DeviceFormPage:
     @staticmethod
     def select_status(sb: BaseCase, status: str) -> None:
         """status: "online" or "offline"."""
+        if sb.is_selected(tid(f"{status}-radio")):
+            return
         sb.click(tid(f"{status}-radio"))
 
     @staticmethod

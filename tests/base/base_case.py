@@ -50,6 +50,15 @@ class AuthCase(BaseCase):
         self.auth.logout()
         super().tearDown()
 
+    def track_devices_named(self, name: str) -> None:
+        """Devices created through the UI have no id in hand: look them up by exact name
+        via the API and add them to created_ids. Safe to call even if nothing was created."""
+        res = self.device_api.list(q=name)
+        if res.ok:
+            for device in res.json():
+                if device["name"] == name and device["id"] not in self.created_ids:
+                    self.created_ids.append(device["id"])
+
     def delete_created_devices(self) -> None:
         """Call from the test class's tearDown, before super().tearDown()."""
         for device_id in self.created_ids:
