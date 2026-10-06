@@ -16,7 +16,11 @@ services:
       retries: 20
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      args: &version-args # set by `make up` / CI from git; plain `docker compose up` shows dev (unknown)
+        APP_VERSION: ${APP_VERSION:-dev}
+        GIT_SHA: ${GIT_SHA:-unknown}
     environment:
       DATABASE_URL: postgresql+psycopg://devicelab:devicelab@db:5432/devicelab
       APP_USERNAME: ${APP_USERNAME:-admin}
@@ -34,7 +38,9 @@ services:
       start_period: 5s
 
   web:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args: *version-args
     ports:
       - "8080:80" # UI tests open http://localhost:8080
     depends_on:

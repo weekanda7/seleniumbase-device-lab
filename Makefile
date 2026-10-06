@@ -2,7 +2,7 @@
 
 # --wait blocks until every healthcheck is green (CI uses the same command).
 up:
-	docker compose up -d --build --wait
+	APP_VERSION=$(VERSION) GIT_SHA=$(GIT_SHA) docker compose up -d --build --wait
 
 # -v drops the DB volume, so the next `up` starts from the 3 seed devices again.
 down:
@@ -44,6 +44,7 @@ test-headed:
 REGISTRY ?= ghcr.io/weekanda7
 VERSION  ?= $(shell git describe --tags --always --dirty)
 TAG      ?= latest
+GIT_SHA  ?= $(shell git rev-parse --short HEAD)
 IMAGES   := backend web tests
 CTX_backend := backend
 CTX_web     := frontend
@@ -58,7 +59,8 @@ version:
 build: $(addprefix build-,$(IMAGES))
 
 build-%:
-	docker build -t $(REGISTRY)/device-lab-$*:$(VERSION) $(CTX_$*)
+	docker build --build-arg APP_VERSION=$(VERSION) --build-arg GIT_SHA=$(GIT_SHA) \
+		-t $(REGISTRY)/device-lab-$*:$(VERSION) $(CTX_$*)
 
 # Release: tag the commit, then `make release` pushes the tag -> CI builds and pushes :<tag> and :latest.
 release:
@@ -76,9 +78,12 @@ pull-%:
 # Smoke-check the tests image: run API / DB tests inside it against the local stack (needs `make up`).
 # Code is mounted, not baked in. UI tests come later with the Grid container.
 # Local build: make test-image TAG=$$(make -s version)
+# host.docker.internal: built into Docker Desktop (Mac / Windows); on Linux it must be mapped with --add-host.
+# Adding --add-host on Mac overrides the built-in name and breaks it (Errno 101 Network is unreachable).
+ADD_HOST := $(if $(filter Linux,$(shell uname -s)),--add-host=host.docker.internal:host-gateway,)
+
 test-image:
-	docker run --rm -v $(CURDIR)/tests:/tests \
-		--add-host=host.docker.internal:host-gateway \
+	docker run --rm -v $(CURDIR)/tests:/tests $(ADD_HOST) \
 		-e API_URL=http://host.docker.internal:8000/api \
 		-e DB_DSN=postgresql://devicelab:devicelab@host.docker.internal:5433/devicelab \
 		$(REGISTRY)/device-lab-tests:$(TAG) \
