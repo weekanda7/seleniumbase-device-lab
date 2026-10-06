@@ -276,3 +276,28 @@ Feature: Language switch
 - **後端**：無（API 錯誤訊息是英文；前端遇到 401 / 409 會換成翻譯文字）
 - **前端**：`i18n.ts`（預設 en；選擇存在 localStorage）、`Root.tsx`（antd `ConfigProvider` locale 跟著切）、`LanguageSwitch.tsx`
 - **改動注意**：zhTW 物件的型別是 `typeof en`，少一個 key 會編譯失敗；測試用文字驗證時要先確定語言（建議測試開頭固定切到 en）
+
+---
+
+## F7 版本顯示
+
+```gherkin
+Feature: Version info
+  @api
+  Scenario: Version returns valid value
+    When I GET /api/version without a token
+    Then the status is 200
+    And "version" looks like a git describe value (v0.1.0, v0.1.0-3-gabc1234, a short sha, or dev)
+    And "commit" is a short git sha (or unknown)
+
+  @ui
+  Scenario: Web and API versions match
+    Given I am on the login page
+    Then the footer shows "Web <version> (<commit>) · API <version> (<commit>)"
+    And the Web and API parts are the same
+```
+
+- **後端**：`GET /api/version`（不用登入，同 `/health`）→ `VersionOut{version, commit}`，讀 env `APP_VERSION` / `GIT_SHA`（Dockerfile `ARG` → `ENV`）
+- **前端**：`components/VersionInfo.tsx`：Web 版本是 build 時注入（`VITE_APP_VERSION` / `VITE_GIT_SHA`），API 版本打 `/api/version`；放在登入頁和登入後 layout 的 footer
+- **版本來源**：只用 git tag（`git describe --tags --always`）。`make up`、CI、`images.yml` 會傳 build-arg；直接 `docker compose up` 顯示 `dev (unknown)`
+- **改動注意**：測試是黑箱、看不到 app 的 git → API 測格式；要驗確切版本時由部署流程設 `EXPECTED_VERSION`

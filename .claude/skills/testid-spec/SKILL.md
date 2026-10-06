@@ -101,6 +101,7 @@ description: data-testid 命名規範（React + Ant Design）。在 frontend/src
 | 裝置列表 | `page-title`、`add-device-button`、`search-input`、`status-select` / `status-option`、`total-num`、`tc-title-{name,type,status,location}` / `tc-{…}`、`more-button` → `option-edit` / `option-remove` |
 | 新增 / 編輯 | `page-title`、`name-field` / `name-input`、`type-field` / `type-select` / `type-option`、`status-field` / `online-radio` / `offline-radio`、`location-field` / `location-input`、`save-button`、`cancel-button` |
 | 裝置詳細 | `back-icon-button`、`breadcrumb-link` / `breadcrumb-name`、`page-title`、`delete-button`、`basic-info-title`、`basic-info-edit-button`、`{type,status,location,created}-field`、`type` / `location` / `created`、`status-online` / `status-offline` |
+| 版本（登入頁、全站 Footer） | `version-area` → `web-version`、`api-version`（唯讀值，無後綴） |
 | 刪除確認 Modal | `.dl-warning-modal` → `.ant-modal-confirm-title`、`delete-button`、`cancel-button` |
 
 ## 9. 新增 testid 的檢查清單

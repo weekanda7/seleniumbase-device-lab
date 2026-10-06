@@ -99,4 +99,5 @@ browser ──8080──> web (nginx) ──/api──> backend (FastAPI :8000) 
 | F4 | 編輯裝置 | `PATCH /api/devices/{id}`（PUT 只在 API） | `/devices/{id}/edit` |
 | F5 | 刪除裝置 | `DELETE /api/devices/{id}` | 列表 More 選單、詳細頁 |
 | F6 | 中英切換 | — | 全站 Header、登入頁 |
+| F7 | 版本顯示 | `GET /api/version` | 登入頁、全站 Footer |
 | — | 裝置詳細 | `GET /api/devices/{id}` | `/devices/{id}` |
