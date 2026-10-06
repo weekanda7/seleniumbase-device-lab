@@ -7,6 +7,11 @@ RUN pip install --no-cache-dir uv
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-install-project --no-dev
 
+# Version from git (passed by Makefile / compose / CI). After the deps layer so it doesn't bust that cache.
+ARG APP_VERSION=dev
+ARG GIT_SHA=unknown
+ENV APP_VERSION=$APP_VERSION GIT_SHA=$GIT_SHA
+
 COPY app ./app
 
 EXPOSE 8000

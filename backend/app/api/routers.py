@@ -1,8 +1,19 @@
+import os
+
 from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app.api.schemas import DeviceCreate, DeviceOut, DevicePatch, DeviceReplace, DeviceStatus, LoginIn, LoginOut
+from app.api.schemas import (
+    DeviceCreate,
+    DeviceOut,
+    DevicePatch,
+    DeviceReplace,
+    DeviceStatus,
+    LoginIn,
+    LoginOut,
+    VersionOut,
+)
 from app.application import auth_service
 from app.application.device_service import DeviceService
 from app.exceptions import InvalidCredentials, Unauthorized
@@ -25,6 +36,13 @@ def get_device_service(db: Session = Depends(get_db)) -> DeviceService:
 @router.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# Public, like /health: a deploy check or the UI footer can read it without logging in.
+# Values are baked into the image at build time (Dockerfile ARG -> ENV).
+@router.get("/version", response_model=VersionOut)
+def version():
+    return VersionOut(version=os.getenv("APP_VERSION", "dev"), commit=os.getenv("GIT_SHA", "unknown"))
 
 
 @router.post("/auth/login", response_model=LoginOut)

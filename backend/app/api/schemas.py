@@ -9,6 +9,11 @@ DeviceName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=
 Location = Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)]
 
 
+class VersionOut(BaseModel):
+    version: str  # git describe, e.g. v0.1.0 / v0.1.0-3-gabc1234; "dev" for a build without args
+    commit: str  # short git sha; "unknown" for a build without args
+
+
 class LoginIn(BaseModel):
     username: str
     password: str
