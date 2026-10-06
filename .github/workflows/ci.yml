@@ -205,3 +205,29 @@ jobs:
         with:
           name: test-report
           path: tests/report/
+
+  # ⑤ Publish the HTML report to GitHub Pages (gh-pages branch), keep 7 days.
+  #    main only (never PR code with a write token); also when tests fail: a red report is the one people need.
+  pages:
+    needs: test
+    if: ${{ always() && needs.test.result != 'skipped' && needs.test.result != 'cancelled' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push gh-pages with GITHUB_TOKEN (no personal token)
+    concurrency:
+      group: pages-publish
+      cancel-in-progress: false # queue publishes; never drop a report
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-report
+          path: ${{ runner.temp }}/report
+      - name: Publish report to gh-pages
+        id: publish
+        # Copied out first: the script switches this checkout to an empty orphan branch (removing scripts/).
+        run: |
+          cp scripts/publish-report.sh "$RUNNER_TEMP/"
+          "$RUNNER_TEMP/publish-report.sh" "$RUNNER_TEMP/report/report.html" 7
+      - name: Report link
+        run: echo "Report → ${{ steps.publish.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"

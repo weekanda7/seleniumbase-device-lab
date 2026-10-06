@@ -90,6 +90,8 @@ Reports: `tests/report/report.html` (pytest-html) and `report.xml` (JUnit).
    - Simplification: in a real team the app is deployed separately and tests point at that environment; here CI deploys it as services.
    - `services:` have no start order, so the backend retries the DB connection and nginx resolves `backend` per request.
 
+5. **pages** (main only, also when tests fail): `scripts/publish-report.sh` adds the report to the `gh-pages` branch as `reports/<date>/run-<n>/`, keeps 7 days and rebuilds the index → **[latest reports](https://weekanda7.github.io/seleniumbase-device-lab/)**. Each publish is one orphan commit (the branch never grows); a `concurrency` group queues publishes so runs can't overwrite each other.
+
 Release: `git tag vX.Y.Z && make release` → `images.yml` builds amd64 + arm64 on native runners and pushes `:vX.Y.Z` + `:latest`.
 
 ![CI run](docs/screenshots/ci-run.png)
@@ -121,7 +123,7 @@ What this demo does on purpose, and what a production setup would change:
   - Third-party actions / images use mutable tags (`@v4`, `:latest`). Production: pin actions to a commit SHA and images to a digest, update with Dependabot.
   - `/api/version` and the login page show version + commit to anyone. Production: show it only after login or on an internal network.
   - Test credentials (`admin` / `admin123`, `devicelab` / `devicelab`) are defaults in compose / CI. Production: secrets, no defaults.
-  - Test reports are public artifacts on a public repo; they may contain the test account typed into the login form.
+  - Test reports are public (artifacts and GitHub Pages); they may contain the test account typed into the login form. Never put real secrets in the test job's environment.
 
 ## Roadmap
 
@@ -129,4 +131,4 @@ What this demo does on purpose, and what a production setup would change:
 - **TypeScript test layer**: component tests (Vitest) or a Playwright TS e2e for the React frontend.
 - **Test management**: push results from `report.xml` (JUnit) to TestRail, so each run maps to test cases and runs there.
 - **Cross-browser / real devices**: run the same suite on BrowserStack through its Selenium hub (`--server` / `--port` plus capabilities), no code changes in the tests.
-- **Published report**: deploy `report.html` to GitHub Pages on every `main` build, so the latest result has a stable URL instead of a downloadable artifact.
+- **Allure Report with history**: trends (pass rate, duration, retries), flaky detection and failure categories (product bug vs test bug) across runs, published next to the pytest-html reports on `gh-pages`.
