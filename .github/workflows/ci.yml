@@ -35,8 +35,11 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git describe needs the tags
       - name: Start app (db + backend + web), wait for healthchecks
-        run: docker compose up -d --build --wait
+        # Same as `make up`: bake the git version into backend / web (shown in the UI footer and /api/version).
+        run: APP_VERSION=$(git describe --tags --always) GIT_SHA=$(git rev-parse --short HEAD) docker compose up -d --build --wait
       - uses: astral-sh/setup-uv@v6
       - name: Run tests (headless Chrome, parallel)
         working-directory: tests
