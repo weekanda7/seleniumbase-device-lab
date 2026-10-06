@@ -11,6 +11,13 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Least privilege: read-only by default; only the two image jobs get packages: write.
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+
 jobs:
   # ① Static checks: ruff (backend / tests) + ESLint & Prettier (frontend). No app needed.
   lint:
@@ -29,36 +36,172 @@ jobs:
       - name: Lint (backend / frontend / tests)
         run: make lint-check
 
-  # ② Black-box tests: same `docker compose up --wait` as local, then pytest against :8080 / :8000 / :5433.
-  test:
+  # ② Test runner image, tagged by a hash of everything that shapes it (Dockerfile + deps).
+  #    Same inputs -> same tag -> pulled, not rebuilt. Test code is not inside (checkout mounts it).
+  #    Only main writes the shared `deps-<hash>` tag that later runs reuse; other refs (PRs) reuse
+  #    main's image if it exists, else push to their own `pr-<n>-deps-<hash>` tag that main never reads.
+  tests-image:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.tag.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pick tag (hash of Dockerfile + .dockerignore + pyproject.toml + uv.lock)
+        id: tag
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          HASH=$(cat tests/Dockerfile tests/.dockerignore tests/pyproject.toml tests/uv.lock | sha256sum | cut -c1-12)
+          SHARED="$REGISTRY/device-lab-tests:deps-$HASH"
+          if docker manifest inspect "$SHARED" >/dev/null 2>&1; then
+            IMAGE="$SHARED"; echo "exists=true" >> "$GITHUB_OUTPUT"; echo "reuse $SHARED (built on main)"
+          elif [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            IMAGE="$SHARED"
+          else
+            IMAGE="$REGISTRY/device-lab-tests:pr-${PR_NUMBER:-manual}-deps-$HASH"
+          fi
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+        if: steps.tag.outputs.exists != 'true'
+      - name: Build and push (inputs changed)
+        if: steps.tag.outputs.exists != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: tests
+          platforms: linux/amd64
+          tags: ${{ steps.tag.outputs.image }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          push: true
+
+  # ③ App images for this commit: :sha-<short>. The test job runs them as services.
+  #    (In a real team the app is deployed separately; here CI deploys it as services, simplified.)
+  app-images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      backend: ${{ steps.meta.outputs.backend }}
+      web: ${{ steps.meta.outputs.web }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # git describe needs the tags
-      - name: Start app (db + backend + web), wait for healthchecks
-        # Same as `make up`: bake the git version into backend / web (shown in the UI footer and /api/version).
-        run: APP_VERSION=$(git describe --tags --always) GIT_SHA=$(git rev-parse --short HEAD) docker compose up -d --build --wait
-      - uses: astral-sh/setup-uv@v6
-      - name: Run tests (headless Chrome, parallel)
+      - name: Version and tags
+        id: meta
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          echo "VERSION=$(git describe --tags --always)" >> "$GITHUB_ENV"
+          echo "GIT_SHA=$SHA" >> "$GITHUB_ENV"
+          echo "backend=$REGISTRY/device-lab-backend:sha-$SHA" >> "$GITHUB_OUTPUT"
+          echo "web=$REGISTRY/device-lab-web:sha-$SHA" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Build backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          platforms: linux/amd64
+          build-args: |
+            APP_VERSION=${{ env.VERSION }}
+            GIT_SHA=${{ env.GIT_SHA }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          tags: ${{ steps.meta.outputs.backend }}
+          push: true
+          cache-from: type=gha,scope=ci-backend
+          cache-to: type=gha,mode=max,scope=ci-backend
+      - name: Build web
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          platforms: linux/amd64
+          build-args: |
+            APP_VERSION=${{ env.VERSION }}
+            GIT_SHA=${{ env.GIT_SHA }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          tags: ${{ steps.meta.outputs.web }}
+          push: true
+          cache-from: type=gha,scope=ci-web
+          cache-to: type=gha,mode=max,scope=ci-web
+
+  # ④ Steps run inside the tests image; app + browser are services on the same Docker network,
+  #    so everything is reached by service name (no localhost / host-gateway tricks).
+  test:
+    needs: [tests-image, app-images]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: ${{ needs.tests-image.outputs.image }}
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_USER: devicelab
+          POSTGRES_PASSWORD: devicelab
+          POSTGRES_DB: devicelab
+        options: >-
+          --health-cmd "pg_isready -U devicelab -d devicelab"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+      backend: # waits for db itself (init_db retries); healthcheck is in its Dockerfile
+        image: ${{ needs.app-images.outputs.backend }}
+        env:
+          DATABASE_URL: postgresql+psycopg://devicelab:devicelab@db:5432/devicelab
+      web: # nginx proxies /api to http://backend:8000
+        image: ${{ needs.app-images.outputs.web }}
+      chrome: # Selenium Grid (standalone): the browser runs here, not in the tests container
+        image: selenium/standalone-chrome:latest
+        options: --shm-size=2g
+        env:
+          SE_NODE_OVERRIDE_MAX_SESSIONS: true
+          SE_NODE_MAX_SESSIONS: 4 # = -n auto workers on a 4-CPU runner
+          TZ: Asia/Taipei
+    env:
+      BASE_URL: http://web # the browser (in `chrome`) opens the UI by service name
+      API_URL: http://backend:8000/api
+      DB_DSN: postgresql://devicelab:devicelab@db:5432/devicelab
+    steps:
+      - uses: actions/checkout@v4 # the code is mounted into the tests container here
+      - name: Wait for Selenium Grid
+        run: |
+          /opt/venv/bin/python - <<'PY'
+          import json, time, urllib.request
+          for _ in range(30):
+              try:
+                  status = json.load(urllib.request.urlopen("http://chrome:4444/status"))
+                  if status["value"]["ready"]:
+                      print("Grid ready"); break
+              except OSError:
+                  pass
+              time.sleep(2)
+          else:
+              raise SystemExit("Grid not ready")
+          PY
+      - name: Run tests (Chrome on Grid, parallel)
         working-directory: tests
-        # -n auto: one worker per CPU. Safe because every test creates its own uuid-named data
-        # and only asserts on it, then deletes it through the API.
+        # -n auto: safe because every test creates its own uuid-named data, only asserts on it,
+        # then deletes it through the API.
+        # /opt/venv is the tests image's venv (see tests/Dockerfile); called by path so PATH doesn't matter.
         run: >
-          uv run pytest --headless -n auto
+          /opt/venv/bin/pytest --headless -n auto
+          --server=chrome --port=4444
           -m "not install_case and not future_case"
           --html=report/report.html --self-contained-html
           --junit-xml=report/report.xml
-      - name: Dump app logs on failure
-        if: failure()
-        run: docker compose logs --no-color
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-report
           path: tests/report/
-      - name: Stop app
-        if: always()
-        run: docker compose down -v

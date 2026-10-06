@@ -15,4 +15,7 @@ ENV APP_VERSION=$APP_VERSION GIT_SHA=$GIT_SHA
 COPY app ./app
 
 EXPOSE 8000
+# Used by CI `services:` (the runner waits until healthy). Compose defines the same check.
+HEALTHCHECK --interval=3s --timeout=3s --start-period=5s --retries=20 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"
 CMD ["uv", "run", "--no-sync", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

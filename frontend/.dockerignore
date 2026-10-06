@@ -1,2 +1,5 @@
 node_modules
 dist
+# local secrets never go into an image (VITE_* would even be baked into the public bundle)
+.env
+.env.*

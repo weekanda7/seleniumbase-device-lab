@@ -84,7 +84,13 @@ Reports: `tests/report/report.html` (pytest-html) and `report.xml` (JUnit).
 `.github/workflows/ci.yml` runs two jobs on every push and pull request:
 
 1. **lint**: ruff (backend, tests) and ESLint / Prettier (frontend).
-2. **test**: `docker compose up -d --build --wait` → `pytest --headless -n auto` → upload the HTML / JUnit report as an artifact. On failure it also dumps the container logs.
+2. **tests-image**: test runner image tagged `deps-<hash of pyproject.toml + uv.lock>`; rebuilt only when dependencies change (test code is mounted by checkout, not baked in).
+3. **app-images**: backend / web for this commit → `ghcr.io/weekanda7/device-lab-{backend,web}:sha-<commit>` (version from `git describe`).
+4. **test**: steps run **inside the tests image** (`container:`); db / backend / web / Selenium Grid (`selenium/standalone-chrome`) run as `services:` on one Docker network, reached by name (`BASE_URL=http://web`, `--server=chrome --port=4444`) → `pytest --headless -n auto` → upload the HTML / JUnit report.
+   - Simplification: in a real team the app is deployed separately and tests point at that environment; here CI deploys it as services.
+   - `services:` have no start order, so the backend retries the DB connection and nginx resolves `backend` per request.
+
+Release: `git tag vX.Y.Z && make release` → `images.yml` builds amd64 + arm64 on native runners and pushes `:vX.Y.Z` + `:latest`.
 
 ![CI run](docs/screenshots/ci-run.png)
 ![Test report](docs/screenshots/test-report.png)
@@ -104,12 +110,21 @@ docker-compose.yml
 .github/workflows/ci.yml
 ```
 
+## Security notes
+
+What this demo does on purpose, and what a production setup would change:
+
+- **CI least privilege**: workflows are read-only by default; only the image-building jobs get `packages: write`.
+- **No image poisoning**: the tests image tag hashes everything that shapes it (Dockerfile + deps). Only `main` writes the shared `deps-<hash>` tag; PRs push to their own `pr-<n>-…` tag that `main` never reuses.
+- **No local secrets in images**: `.env*` is in every `.dockerignore` (anything `VITE_*` would be public in the JS bundle).
+- Known trade-offs, accepted for a demo:
+  - Third-party actions / images use mutable tags (`@v4`, `:latest`). Production: pin actions to a commit SHA and images to a digest, update with Dependabot.
+  - `/api/version` and the login page show version + commit to anyone. Production: show it only after login or on an internal network.
+  - Test credentials (`admin` / `admin123`, `devicelab` / `devicelab`) are defaults in compose / CI. Production: secrets, no defaults.
+  - Test reports are public artifacts on a public repo; they may contain the test account typed into the login form.
+
 ## Roadmap
 
-- **Selenium Grid in CI**: move Chrome out of the runner into a `selenium/standalone-chrome` service container.
-  The browser reaches the app through the host (`--add-host=host.docker.internal:host-gateway`,
-  `BASE_URL=http://host.docker.internal:8080`); SeleniumBase connects with `--server=localhost --port=4444`.
-  Trade-off: the browser's network path differs from local runs, accepted to match a typical production-like setup.
 - **Typed test inputs**: device status / type as `Enum` instead of strings.
 - **TypeScript test layer**: component tests (Vitest) or a Playwright TS e2e for the React frontend.
 - **Test management**: push results from `report.xml` (JUnit) to TestRail, so each run maps to test cases and runs there.

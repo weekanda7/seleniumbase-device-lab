@@ -1,2 +1,5 @@
 .venv
 __pycache__
+# local secrets never go into an image (VITE_* would even be baked into the public bundle)
+.env
+.env.*
