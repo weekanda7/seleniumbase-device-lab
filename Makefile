@@ -39,37 +39,32 @@ test-headed:
 
 # ---- Images on GHCR (backend / web = the app, tests = the test runner) ----
 # Version = git tag only (no VERSION file): v0.1.0 on a tagged commit, v0.1.0-3-gabc1234 after it.
-# One-time: docker login ghcr.io -u weekanda7 (token with write:packages); make each package Public on GitHub.
-REGISTRY  ?= ghcr.io/weekanda7
-VERSION   ?= $(shell git describe --tags --always --dirty)
-TAG       ?= latest
-PLATFORMS ?= linux/amd64,linux/arm64
-IMAGES    := backend web tests
+# Multi-arch (amd64 + arm64) images are built by GitHub Actions on native runners (.github/workflows/images.yml),
+# not on this laptop: emulating amd64 on Apple Silicon (QEMU) segfaults `uv sync`.
+REGISTRY ?= ghcr.io/weekanda7
+VERSION  ?= $(shell git describe --tags --always --dirty)
+TAG      ?= latest
+IMAGES   := backend web tests
 CTX_backend := backend
 CTX_web     := frontend
 CTX_tests   := tests
-REPO_URL  := https://github.com/weekanda7/seleniumbase-device-lab
 
-.PHONY: version builder build pull test-image
+.PHONY: version build release pull test-image
 
 version:
 	@echo $(VERSION)
 
-# Multi-platform builds (Mac arm64 + CI amd64) need a docker-container builder; created once.
-builder:
-	@docker buildx inspect devicelab >/dev/null 2>&1 || docker buildx create --name devicelab --driver docker-container
-
-# Build all images for amd64 + arm64 and push :<version> and :latest.
+# Local build for this machine's CPU only, loaded into local Docker (nothing is pushed).
 build: $(addprefix build-,$(IMAGES))
 
-build-%: builder
-	@case "$(VERSION)" in *dirty*) echo "Uncommitted changes ($(VERSION)): commit first, the tag must match the code"; exit 1;; esac
-	docker buildx build --builder devicelab --pull --platform $(PLATFORMS) \
-		--label org.opencontainers.image.source=$(REPO_URL) \
-		--label org.opencontainers.image.version=$(VERSION) \
-		-t $(REGISTRY)/device-lab-$*:$(VERSION) \
-		-t $(REGISTRY)/device-lab-$*:latest \
-		--push $(CTX_$*)
+build-%:
+	docker build -t $(REGISTRY)/device-lab-$*:$(VERSION) $(CTX_$*)
+
+# Release: tag the commit, then `make release` pushes the tag -> CI builds and pushes :<tag> and :latest.
+release:
+	@case "$(VERSION)" in *dirty*) echo "Uncommitted changes: commit first"; exit 1;; esac
+	@git describe --tags --exact-match >/dev/null 2>&1 || { echo "HEAD has no tag: git tag vX.Y.Z first"; exit 1; }
+	git push origin $(VERSION)
 
 # make pull            -> :latest
 # make pull TAG=v0.1.0 -> a fixed version
@@ -79,7 +74,8 @@ pull-%:
 	docker pull $(REGISTRY)/device-lab-$*:$(TAG)
 
 # Smoke-check the tests image: run API / DB tests inside it against the local stack (needs `make up`).
-# UI tests come later with the Grid container.
+# Code is mounted, not baked in. UI tests come later with the Grid container.
+# Local build: make test-image TAG=$$(make -s version)
 test-image:
 	docker run --rm -v $(CURDIR)/tests:/tests \
 		--add-host=host.docker.internal:host-gateway \

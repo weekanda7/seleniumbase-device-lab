@@ -1,0 +1,101 @@
+name: Images
+
+# Release = push a git tag:  git tag v0.1.0 && git push origin v0.1.0
+# Builds backend / web / tests for amd64 + arm64 on native runners (no QEMU emulation),
+# then merges each pair into one multi-arch tag on GHCR: :v0.1.0 and :latest.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: # manual run: version = git describe (e.g. v0.1.0-3-gabc1234)
+
+permissions:
+  contents: read
+  packages: write # GITHUB_TOKEN can push to ghcr.io/<owner>/*, no personal token needed
+
+env:
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+
+jobs:
+  # ① One job per image x CPU. Each pushes its image by digest only (no tag yet).
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [backend, web, tests]
+        arch: [amd64, arm64]
+        include:
+          - { image: backend, context: backend }
+          - { image: web, context: frontend }
+          - { image: tests, context: tests }
+          - { arch: amd64, runner: ubuntu-latest }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git describe needs the tags
+      - name: Version from git tag
+        run: echo "VERSION=$(git describe --tags --always)" >> "$GITHUB_ENV"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/${{ matrix.arch }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ env.VERSION }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          outputs: type=image,name=${{ env.REGISTRY }}/device-lab-${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.arch }}
+      - name: Save digest
+        run: |
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${DIGEST#sha256:}"
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ matrix.image }}-${{ matrix.arch }}
+          path: /tmp/digests/*
+          retention-days: 1
+
+  # ② One job per image: join the amd64 + arm64 digests into one multi-arch tag.
+  merge:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: [backend, web, tests]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Version from git tag
+        run: echo "VERSION=$(git describe --tags --always)" >> "$GITHUB_ENV"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: digest-${{ matrix.image }}-*
+          path: /tmp/digests
+          merge-multiple: true
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Create multi-arch tags
+        working-directory: /tmp/digests
+        run: |
+          IMAGE="$REGISTRY/device-lab-${{ matrix.image }}"
+          docker buildx imagetools create \
+            -t "$IMAGE:$VERSION" -t "$IMAGE:latest" \
+            $(printf "$IMAGE@sha256:%s " *)
+          docker buildx imagetools inspect "$IMAGE:$VERSION"
