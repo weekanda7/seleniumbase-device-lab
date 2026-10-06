@@ -10,6 +10,12 @@
 # so the branch never grows. The job's `concurrency` group queues publishes, so two runs can't overwrite each other.
 set -euo pipefail
 
+# CI only: it runs `git clean -fdx` on the current checkout. Never run it in your own working copy.
+if [[ "${GITHUB_ACTIONS:-}" != "true" ]]; then
+  echo "publish-report.sh is meant for GitHub Actions only (it wipes the working copy)." >&2
+  exit 1
+fi
+
 REPORT=$1
 KEEP_DAYS=${2:-7}
 RUN="run-${GITHUB_RUN_NUMBER:?}"

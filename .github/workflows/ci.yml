@@ -228,6 +228,6 @@ jobs:
         # Copied out first: the script switches this checkout to an empty orphan branch (removing scripts/).
         run: |
           cp scripts/publish-report.sh "$RUNNER_TEMP/"
-          "$RUNNER_TEMP/publish-report.sh" "$RUNNER_TEMP/report/report.html" 7
+          bash "$RUNNER_TEMP/publish-report.sh" "$RUNNER_TEMP/report/report.html" 7
       - name: Report link
         run: echo "Report → ${{ steps.publish.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
