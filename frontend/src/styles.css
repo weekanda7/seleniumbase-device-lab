@@ -61,6 +61,8 @@ body {
   min-height: 100vh;
   display: grid;
   place-items: center;
+  align-content: center;
+  gap: 16px;
   padding: 16px;
 }
 
@@ -71,4 +73,14 @@ body {
 
 .detail-nav {
   margin-bottom: 8px;
+}
+
+/* Web / API version line: login page and the footer of every page behind login. */
+.app-footer {
+  text-align: center;
+  padding: 12px 16px;
+}
+
+.version-info {
+  font-size: 12px;
 }

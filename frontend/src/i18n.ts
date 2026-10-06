@@ -9,6 +9,7 @@ export const LANGUAGES = [
 
 const en = {
   app: { title: "Device Lab" },
+  version: { web: "Web", api: "API" },
   nav: { logout: "Log out" },
   common: {
     save: "Save",
@@ -60,6 +61,7 @@ const en = {
 
 const zhTW: typeof en = {
   app: { title: "Device Lab" },
+  version: { web: "網頁", api: "API" },
   nav: { logout: "登出" },
   common: {
     save: "儲存",

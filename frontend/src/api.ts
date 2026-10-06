@@ -35,6 +35,8 @@ export type DeviceInput = {
   location: string;
 };
 
+export type VersionInfo = { version: string; commit: string };
+
 export type DeviceQuery = { q?: string; status?: DeviceStatus };
 
 export const DEVICE_TYPES = ["Router", "Switch", "AP", "Sensor"];
@@ -89,6 +91,7 @@ export const api = {
       body: JSON.stringify({ username, password }),
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
+  getVersion: () => request<VersionInfo>("/version"),
   listDevices: (query: DeviceQuery = {}) => request<Device[]>(`/devices${toQueryString(query)}`),
   getDevice: (id: string) => request<Device>(`/devices/${id}`),
   createDevice: (input: DeviceInput) =>

@@ -4,6 +4,7 @@ import { LogoutOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { api, auth } from "./api";
 import LanguageSwitch from "./components/LanguageSwitch";
+import VersionInfo from "./components/VersionInfo";
 import LoginPage from "./pages/LoginPage";
 import DeviceListPage from "./pages/DeviceListPage";
 import DeviceNewPage from "./pages/DeviceNewPage";
@@ -38,6 +39,9 @@ function ProtectedLayout() {
       <Layout.Content className="container">
         <Outlet />
       </Layout.Content>
+      <Layout.Footer className="app-footer">
+        <VersionInfo />
+      </Layout.Footer>
     </Layout>
   );
 }

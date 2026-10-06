@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { api, ApiError, auth } from "../api";
 import LanguageSwitch from "../components/LanguageSwitch";
 import FieldLabel from "../components/FieldLabel";
+import VersionInfo from "../components/VersionInfo";
 
 type LoginValues = { username: string; password: string };
 
@@ -69,6 +70,7 @@ export default function LoginPage() {
           </Button>
         </Form>
       </Card>
+      <VersionInfo />
     </main>
   );
 }
