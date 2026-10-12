@@ -250,6 +250,37 @@ Feature: Delete a device
 
 ---
 
+## 裝置詳細
+
+```gherkin
+Feature: Device detail
+  Background:
+    Given I am logged in
+
+  @ui
+  Scenario: Show device info
+    Given a device "dt-01" exists with type "Switch", status "offline", location "B2"
+    When I open its detail page
+    Then the title and breadcrumb show "dt-01"
+    And the type, status and location fields show "Switch", offline, "B2"
+    # every field is checked with deferred asserts: one run reports all wrong fields
+
+  @ui
+  Scenario: Back to the list
+    When I click the back button on the detail page
+    Then I am on the device list
+
+  @ui
+  Scenario: Open edit from the detail page
+    When I click the Basic info edit icon
+    Then I am on /devices/{id}/edit
+```
+
+- **前端**：`DeviceDetailPage.tsx`（`GET /api/devices/{id}`）；刪除走 F5 的 `useDeleteDevice.ts`
+- **測試**：`tests/cases/ui/test_device_detail.py`（F5 的 Delete from the detail page / Cancel the dialog 也在這）
+
+---
+
 ## F6 中英切換
 
 ```gherkin
