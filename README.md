@@ -108,8 +108,12 @@ tests/
   api_apiserver/    Auth + DeviceApi clients
   db_client/        read-only Postgres queries
   cases/{ui,api,db} the tests; cases/conftest.py has the `api` fixture
+  Dockerfile        test runner image (deps only; code is mounted)
+scripts/
+  publish-report.sh CI only: publishes the report to gh-pages (refuses to run outside GitHub Actions)
 docker-compose.yml
-.github/workflows/ci.yml
+.github/workflows/ci.yml       lint → images → tests (container + services) → pages
+.github/workflows/images.yml   release: git tag vX.Y.Z → multi-arch images on GHCR
 ```
 
 ## Security notes
