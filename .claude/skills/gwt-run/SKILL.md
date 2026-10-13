@@ -32,7 +32,7 @@ Case to run: `$ARGUMENTS` (if it ends with `--debug`, turn on debug mode, see be
    - Field validation messages have no testid; use the **single-level** selector `#device_{field}_help` (e.g. `#device_name_help`; its text is the error message). The seleniumbase MCP tools don't accept descendant selectors with a space (`A B`)
    - antd dropdown options render in a portal at the end of `<body>`
 7. **Then**: check each Then / And line once, **with a fixed method** (don't use `assert_condition`, and don't switch methods):
-   - **On-screen text**: `wait_for_condition` until the element appears (up to 10 s) → `get_content` to read its text → trim, collapse repeated whitespace → must **equal** the expected text exactly
+   - **On-screen text**: `wait_for_condition` until the element appears (up to 10 s) → run `sleep 1` in the shell (lets antd's enter animation finish; the element is re-rendered while it animates) → `get_content` to read its text → trim, collapse repeated whitespace → must **equal** the expected text exactly
    - **URL**: `get_page_info` for the current URL → compare the path
    - **API result**: call the API with the fixed pattern from step 5 → compare status and content
    - Element never appears → BLOCKED; element read but text differs → FAIL
