@@ -8,7 +8,7 @@ pytestmark = pytest.mark.ui
 
 
 class DeviceDetailTest(AuthCase):
-    """Device detail page (/devices/{id}) + F5 delete from the detail page.  # 🤝 AI
+    """Device detail page (/devices/{id}) + F5 delete from the detail page.
     Each test arranges its own device through the API, so it never depends on seed data."""
 
     def tearDown(self):
@@ -24,7 +24,7 @@ class DeviceDetailTest(AuthCase):
         return device
 
     def test_show_device_info(self):
-        "[UI][Device detail] 詳細頁顯示裝置的名稱、類型、狀態、位置（deferred asserts）"  # 🤝 AI
+        "[UI][Device detail] Detail page shows the device name, type, status and location (deferred asserts)"
         name = uuid_name("dt")
         device = self._create(name=name, type="Switch", status="offline", location="B2")
 
@@ -38,14 +38,14 @@ class DeviceDetailTest(AuthCase):
         self.process_deferred_asserts()  # required: without it every deferred failure is silently dropped
 
     def test_back_to_the_list(self):
-        "[UI][Device detail] 返回按鈕回到裝置列表"  # 🤝 AI
+        "[UI][Device detail] Back button returns to the device list"
         device = self._create(name=uuid_name("dt"))
 
         DeviceDetailPage.open(self, device["id"])
         DeviceDetailPage.back_to_list(self)  # asserts the URL is /devices
 
     def test_open_edit_from_the_detail_page(self):
-        "[UI][Device detail] Basic info 的編輯圖示進到編輯頁"  # 🤝 AI
+        "[UI][Device detail] Basic info edit icon opens the edit page"
         device = self._create(name=uuid_name("dt"))
 
         DeviceDetailPage.open(self, device["id"])
@@ -53,7 +53,7 @@ class DeviceDetailTest(AuthCase):
         self.assert_url_contains(f"/devices/{device['id']}/edit")
 
     def test_delete_from_the_detail_page(self):
-        "[UI][Device detail] F5 詳細頁刪除：確認後回列表，API 查不到"  # 🤝 AI
+        "[UI][Device detail] F5 delete from the detail page: after confirming, back on the list and the API no longer finds it"
         name = uuid_name("dt")
         device = self._create(name=name)
 
@@ -66,7 +66,7 @@ class DeviceDetailTest(AuthCase):
         assert self.device_api.get(device["id"]).status_code == 404
 
     def test_cancel_the_dialog(self):
-        "[UI][Device detail] F5 取消刪除：留在詳細頁，裝置還在"  # 🤝 AI
+        "[UI][Device detail] F5 cancel delete: stays on the detail page and the device still exists"
         name = uuid_name("dt")
         device = self._create(name=name)
 

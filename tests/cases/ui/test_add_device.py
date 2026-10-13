@@ -15,37 +15,35 @@ class AddDeviceTest(AuthCase):
         self.name = uuid_name("test")
 
     def tearDown(self):
-        self.track_devices_named(
-            self.name
-        )  # UI-created device: find its id by name  # 🤝 AI
+        self.track_devices_named(self.name)  # UI-created device: find its id by name
         self.delete_created_devices()  # API delete first, then logout + driver quit
         super().tearDown()
 
     def test_add_device_success(self):
         """
-        [UI][Add device] 新增 Device 成功
+        [UI][Add device] Add a device successfully
 
-        Given 已登入（admin；API 捷徑：POST /api/auth/login，token 寫進 sessionStorage）
-        When 在新增裝置頁（/devices/new）輸入不重複的名稱 {name}，類型 Router、狀態 online，按 Save
-        Then 出現成功 toast「Device {name} created」
+        Given I am logged in (admin; API shortcut: POST /api/auth/login, token written to sessionStorage)
+        When I enter a unique name {name}, type Router, status online on the add-device page (/devices/new) and press Save
+        Then a success toast shows "Device {name} created"
 
-        {name} = uuid_name("test")，例：test-1a2b3c4d
+        {name} = uuid_name("test"), e.g. test-1a2b3c4d
         """
         DeviceFormPage.create_device(self, name=self.name)
         Toast.assert_success(self, f"Device {self.name} created")
 
     def test_duplicate_name(self):
         """
-        [UI][Add device] 名稱重複：欄位顯示已存在，停在新增頁
+        [UI][Add device] Duplicate name: the field shows it already exists and the page stays on the add form
 
-        Given 已登入（admin；API 捷徑：POST /api/auth/login，token 寫進 sessionStorage）
-        And 已用 API 建立名稱 {name} 的裝置（POST /api/devices → 201）
-        When 在新增裝置頁（/devices/new）輸入同一個名稱 {name}，按 Save
-        Then 名稱欄位顯示「Device name '{name}' already exists」
-        And 網址仍在 /devices/new
-        And 用名稱查詢只有 1 筆（GET /api/devices?q={name}）
+        Given I am logged in (admin; API shortcut: POST /api/auth/login, token written to sessionStorage)
+        And a device named {name} was created via the API (POST /api/devices -> 201)
+        When I enter the same name {name} on the add-device page (/devices/new) and press Save
+        Then the name field shows "Device name '{name}' already exists"
+        And the URL is still /devices/new
+        And searching by name returns exactly 1 device (GET /api/devices?q={name})
 
-        {name} = uuid_name("test")，例：test-1a2b3c4d
+        {name} = uuid_name("test"), e.g. test-1a2b3c4d
         """
         res = self.device_api.create(
             name=self.name

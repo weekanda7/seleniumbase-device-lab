@@ -16,7 +16,7 @@ COMMIT_RE = r"[0-9a-f]{7,40}|unknown"
 
 class TestVersionApi:
     def test_version_returns_valid_value(self):
-        "[API][Version] /api/version 不用登入回 200，version / commit 是合法格式"  # 🤝 AI
+        "[API][Version] /api/version returns 200 without login; version / commit have a valid format"
         res = requests.get(f"{Config.API_URL}/version", timeout=10)
         assert res.status_code == 200, res.text
         body = res.json()

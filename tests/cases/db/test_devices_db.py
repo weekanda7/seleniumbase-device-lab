@@ -11,7 +11,7 @@ class TestDevicesDb:
     not just what the API echoed back."""
 
     def test_created_device_is_persisted(self, api):
-        "[DB][Add device] API 建立後，DB 欄位一致、有 created_at"  # 🤝 AI
+        "[DB][Add device] After creating via the API, DB columns match and created_at is set"
         name = uuid_name("db")
         res = api.create(name=name, type="Switch", status="offline", location="  3F  ")
         assert res.status_code == 201, res.text
@@ -27,7 +27,7 @@ class TestDevicesDb:
         assert row["created_at"] is not None
 
     def test_deleted_device_is_gone(self, api):
-        "[DB][Delete device] API 刪除後，DB 查不到、GET 回 404"  # 🤝 AI
+        "[DB][Delete device] After deleting via the API, the row is gone from the DB and GET returns 404"
         name = uuid_name("db")
         res = api.create(name=name)
         assert res.status_code == 201, res.text

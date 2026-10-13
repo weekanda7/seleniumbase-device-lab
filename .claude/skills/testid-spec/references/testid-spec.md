@@ -1,275 +1,275 @@
-# Test ID 命名規範（Test ID Spec）
+# Test ID Spec
 
-> 來源：過去 Web 專案（React + Ant Design）的 QA testid wiki，共 21 頁（Elements、Base Pages、Modals、各功能頁）。
-> 本文件把當時的規則、慣例與踩過的坑整理成可重用的規範，並在最後附上移植到 Android（Espresso / Compose）的對照。
-
----
-
-## 1. 目的與原則
-
-1. **測試定位要穩定**：不依賴 DOM 結構、CSS class 或排版位置，改版時測試不需跟著改。
-2. **看名字就知道是什麼**：從 testid 能直接讀出「哪個欄位」和「什麼元件」。
-3. **可推導、不需查表**：同一類元件用同一套規則，寫測試的人能直接推出 testid。
-4. **QA 與 FE 共同維護**：規範由 QA 定義，FE 實作；每頁 wiki 是雙方的契約。
+> Source: the QA testid wiki of a past web project (React + Ant Design), 21 pages (Elements, Base Pages, Modals, each feature page).
+> This document turns its rules, conventions and lessons into a reusable spec, with a mapping to Android (Espresso / Compose) at the end.
 
 ---
 
-## 2. 定位策略優先順序
+## 1. Goals and principles
 
-不是每個元素都要加 testid。依以下順序選擇：
+1. **Stable locators**: don't depend on DOM structure, CSS classes or layout position, so tests don't change with every redesign.
+2. **The name says what it is**: a testid tells you "which field" and "which component".
+3. **Derivable, no lookup needed**: the same kind of component follows the same rule, so test authors can derive the testid.
+4. **Owned by QA and FE together**: QA defines the spec, FE implements it; each page's wiki is the contract between them.
 
-| 優先 | 策略 | 適用情境 | 範例 |
+---
+
+## 2. Locator priority
+
+Not every element needs a testid. Choose in this order:
+
+| Priority | Strategy | When | Example |
 |---|---|---|---|
-| 1 | `data-testid` | 表單欄位、表格欄位、icon button、選單、狀態燈號等沒有穩定文字的元素 | `data-testid="login-button"` |
-| 2 | 標籤 + 文字 | 有明確文字的一般按鈕、錯誤訊息 | `//button//*[text()="Confirm"]` |
-| 3 | 語意屬性 | 無障礙屬性或元件原生屬性已足夠辨識 | `aria-label="Select all"`、`role="tooltip"`、`placeholder="Start date"` |
-| 4 | UI 框架的 class（contains 比對） | 第三方元件無法加 testid 時（Ant Design Modal） | `contains(@class, "ant-modal-title")` |
-| 5 | 不加 | 無測試需求的元素 | 「Download all」按鈕明確標註不需 testid |
+| 1 | `data-testid` | Form fields, table columns, icon buttons, menus, status indicators and other elements without stable text | `data-testid="login-button"` |
+| 2 | Tag + text | Ordinary buttons with clear text, error messages | `//button//*[text()="Confirm"]` |
+| 3 | Semantic attributes | Accessibility or native attributes are enough to identify it | `aria-label="Select all"`, `role="tooltip"`, `placeholder="Start date"` |
+| 4 | UI framework class (contains match) | Third-party components that can't take a testid (Ant Design Modal) | `contains(@class, "ant-modal-title")` |
+| 5 | None | Elements with no testing need | The "Download all" button is explicitly marked as needing no testid |
 
-**規則**
-- 一般按鈕**優先用文字定位**；只有特殊情況（文字不穩定、重複、純 icon）才加 testid。
-- 紅色錯誤訊息（Alert）**不加 testid**，直接用文字驗證，順便驗證了文案。
-- 框架產生、無法注入屬性的元素（例如 Tags Select 的選項）要在 wiki 註明「無法加 testid」，並寫出替代定位方式。
+**Rules**
+- Ordinary buttons are **located by text first**; add a testid only in special cases (unstable text, duplicates, icon only).
+- Red error messages (Alert) get **no testid**; verify them by text, which also verifies the copy.
+- Framework-generated elements that can't take attributes (e.g. Tags Select options) must be marked "cannot take a testid" in the wiki, with the alternative locator written down.
 
 ---
 
-## 3. 命名格式總則
+## 3. Naming format
 
-| 項目 | 規則 |
+| Item | Rule |
 |---|---|
-| 屬性名稱 | 一律 `data-testid`（**不可**用 `data_testid`、`date-testid`） |
-| 大小寫 | 全小寫 |
-| 分隔符 | kebab-case（`-`） |
-| 語言 | 英文，取自畫面上的英文標題 |
-| 基本結構 | `{主體}-{元件類型}`，例：`account-input`、`siem-connection-switch` |
-| 例外結構 | 少數類別使用**前綴**，例：`option-edit`、`tc-server-name`（見第 5 節） |
-| 主體命名 | 依畫面上的標題文字轉成 kebab-case：`Email address` → `email-address` |
-| 縮寫 | 可用常見縮寫，但全專案要一致：`web-app`、`app-info`、`ip` |
-| 動態值 | 盡量避免；非用不可時寫明變數格式，例：`{project_name}`、`{type}` |
+| Attribute name | Always `data-testid` (**never** `data_testid`, `date-testid`) |
+| Case | All lowercase |
+| Separator | kebab-case (`-`) |
+| Language | English, taken from the on-screen English label |
+| Basic structure | `{subject}-{component type}`, e.g. `account-input`, `siem-connection-switch` |
+| Exceptions | A few categories use a **prefix**, e.g. `option-edit`, `tc-server-name` (see section 5) |
+| Subject | The on-screen label in kebab-case: `Email address` → `email-address` |
+| Abbreviations | Common abbreviations are fine but must be consistent project-wide: `web-app`, `app-info`, `ip` |
+| Dynamic values | Avoid; if unavoidable, document the variable format, e.g. `{project_name}`, `{type}` |
 
 ---
 
-## 4. 後綴字典（Suffix）
+## 4. Suffix dictionary
 
-| 後綴 | 意義 | 範例 |
+| Suffix | Meaning | Example |
 |---|---|---|
-| `-field` | 表單欄位的**標題（label）** | `password-field` |
-| （無後綴） | 表單欄位的**唯讀內容值** | `credential-name`、`member-name` |
-| `-input` | 文字輸入框 | `password-input` |
-| `-textarea` | 多行輸入框 | `reason-textarea` |
-| `-select` | 下拉選單本體 | `access-service-select` |
-| `-option` | 下拉選單的選項（Select 類） | `access-service-option` |
-| `-button` | 按鈕 / icon button | `back-icon-button`、`menu-button` |
-| `-edit-button` | 區塊標題旁的編輯圖示 | `basic-info-edit-button` |
-| `-export-button` | 列表頁匯出按鈕，前面加資源名稱 | `device-export-button` |
-| `-link` | 連結 | `forgot-password-link` |
-| `-checkbox` | 核取方塊，前面加其標題 | `case-sensitive-checkbox` |
-| `-radio` | 單選按鈕，前面加其選項文字 | `linux-radio` |
-| `-switch` | 開關 | `two-factor-authentication-switch` |
-| `-tab` | 分頁籤 | `device-tab` |
-| `-title` | 區塊 / 表單標題 | `basic-info-title` |
-| `-alert` | 說明文字框（藍色或灰色描述） | `security-alert` |
-| `-tooltip` | tooltip 觸發 icon，前面加所屬元素 | `new-password-field-tooltip` |
-| `-area` | 一整個區塊容器 | `device-status-area` |
-| `-label` | 附屬標籤文字 | `trust-this-browser-label` |
-| `-img` | 圖片 | `cis-login-footer-img` |
-| `-menu-item` | 側邊選單項目 | `audit-log-menu-item` |
+| `-field` | A form field's **label** | `password-field` |
+| (no suffix) | A form field's **read-only value** | `credential-name`, `member-name` |
+| `-input` | Text input | `password-input` |
+| `-textarea` | Multi-line input | `reason-textarea` |
+| `-select` | The dropdown itself | `access-service-select` |
+| `-option` | A dropdown option (Select type) | `access-service-option` |
+| `-button` | Button / icon button | `back-icon-button`, `menu-button` |
+| `-edit-button` | Edit icon next to a section title | `basic-info-edit-button` |
+| `-export-button` | Export button on a list page, prefixed with the resource name | `device-export-button` |
+| `-link` | Link | `forgot-password-link` |
+| `-checkbox` | Checkbox, prefixed with its label | `case-sensitive-checkbox` |
+| `-radio` | Radio button, prefixed with its option text | `linux-radio` |
+| `-switch` | Toggle | `two-factor-authentication-switch` |
+| `-tab` | Tab | `device-tab` |
+| `-title` | Section / form title | `basic-info-title` |
+| `-alert` | Info box (blue or grey description) | `security-alert` |
+| `-tooltip` | Tooltip trigger icon, prefixed with the element it belongs to | `new-password-field-tooltip` |
+| `-area` | A whole section container | `device-status-area` |
+| `-label` | Secondary label text | `trust-this-browser-label` |
+| `-img` | Image | `cis-login-footer-img` |
+| `-menu-item` | Side menu item | `audit-log-menu-item` |
 
-**欄位三件組**是最常用的模式，一個表單欄位通常同時有：
+The **field trio** is the most common pattern; a form field usually has all three:
 
 ```
-{name}-field    → 欄位標題 "Account"
-{name}-input    → 可編輯時的輸入框（或 -select / -textarea）
-{name}          → 唯讀時顯示的值
+{name}-field    → the field label "Account"
+{name}-input    → the input when editable (or -select / -textarea)
+{name}          → the value shown when read-only
 ```
 
 ---
 
-## 5. 前綴字典（Prefix）
+## 5. Prefix dictionary
 
-| 前綴 | 意義 | 範例 |
+| Prefix | Meaning | Example |
 |---|---|---|
-| `option-` | Dropdown 選單（動作選單、More 選單）的選項 | `option-edit`、`option-log-out` |
-| `tc-title-` | 表格欄位**標題**（table column title） | `tc-title-server-name` |
-| `tc-` | 表格欄位**內容**（每一列都會出現） | `tc-server-name` |
-| `step-` | 多步驟精靈的每一步 | `step-select-target`、`step-completed` |
-| `meta-` | Dashboard 卡片內的元素 | `meta-title`、`meta-num`、`meta-devices-area` |
-| `status-` | 狀態燈號 | `status-running`、`status-stopped` |
-| `rank-` | 排行榜元素 | `rank-title`、`rank-item-value` |
-| `breadcrumb-` | 導航列 | `breadcrumb-link`、`breadcrumb-name` |
+| `option-` | Options of a Dropdown (action menu, More menu) | `option-edit`, `option-log-out` |
+| `tc-title-` | Table column **header** (table column title) | `tc-title-server-name` |
+| `tc-` | Table column **content** (appears in every row) | `tc-server-name` |
+| `step-` | Each step of a multi-step wizard | `step-select-target`, `step-completed` |
+| `meta-` | Elements inside a dashboard card | `meta-title`, `meta-num`, `meta-devices-area` |
+| `status-` | Status indicator | `status-running`, `status-stopped` |
+| `rank-` | Leaderboard elements | `rank-title`, `rank-item-value` |
+| `breadcrumb-` | Breadcrumb | `breadcrumb-link`, `breadcrumb-name` |
 
-**`-option` 與 `option-` 的區別**
-- Ant Design **Select**（表單下拉）→ 後綴 `-option`，因為選項屬於某個欄位：`ip-address-option`。
-- Ant Design **Dropdown**（動作選單）→ 前綴 `option-`，因為選項本身就是動作：`option-remove`。
+**`-option` vs `option-`**
+- Ant Design **Select** (form dropdown) → suffix `-option`, because the option belongs to a field: `ip-address-option`.
+- Ant Design **Dropdown** (action menu) → prefix `option-`, because the option is itself an action: `option-remove`.
 
 ---
 
-## 6. 共用元件規則（Elements）
+## 6. Shared component rules (Elements)
 
-| 元件 | 規則 | 範例 |
+| Component | Rule | Example |
 |---|---|---|
-| Logo | 用 `id` | `id="logo"` |
-| 錯誤訊息（紅色 Alert） | 不加，用文字驗證 | `//*[text()="..."]` |
-| 一般按鈕 | 優先文字；特殊情況 `{文字}-button` | `connect-button` |
-| Icon button | `{功能}-icon-button` 或 `{功能}-button` | `back-icon-button` |
-| 全選 Checkbox | `aria-label="Select all"` | — |
-| Checkbox | `{標題}-checkbox` | `exact-match-url-checkbox` |
-| Radio（有文字） | `{文字}-radio` | `windows-radio` |
-| Radio（無文字） | `{所屬項目}-radio` | `secret-radio` |
-| Switch | `{標題}-switch` | `alert-switch` |
-| Link | `{文字}-link` | `view-all-server-link` |
-| 未讀紅點 | 固定值 | `unread`；閃動版 `flash-unread` |
-| 狀態燈號 | `status-{狀態}` | `status-running` / `processing` / `stopped` / `warning` / `unknown` |
-| Tag 元件 | 固定值 | `tag`；「+N」為 `tag-more` |
-| Tag 的欄位與值 | 特規，避免與 `tag` 撞名 | `tag-field`、`tag-value` |
-| Tooltip 文字框 | `role="tooltip"` | — |
-| Tooltip icon | `{所屬元素}-tooltip` | `test-connection-field-tooltip` |
-| 說明文字框 | `{標題}-alert` | `key-pair-file-alert` |
-| Tags 輸入框 | 固定值；選項無法加 testid | `tags-select` |
-| Badge（數字或 All） | 固定值 | `badge` |
-| JSON 檢視區 | 固定值 | `json-view` |
-| Date Period | 固定值 | `date-period-select`、`date-period-option` |
-| Date Picker | 用 placeholder | `placeholder="Start date"` / `"End date"` |
+| Logo | Use `id` | `id="logo"` |
+| Error message (red Alert) | None; verify by text | `//*[text()="..."]` |
+| Ordinary button | Text first; in special cases `{text}-button` | `connect-button` |
+| Icon button | `{function}-icon-button` or `{function}-button` | `back-icon-button` |
+| Select-all checkbox | `aria-label="Select all"` | — |
+| Checkbox | `{label}-checkbox` | `exact-match-url-checkbox` |
+| Radio (with text) | `{text}-radio` | `windows-radio` |
+| Radio (no text) | `{owning item}-radio` | `secret-radio` |
+| Switch | `{label}-switch` | `alert-switch` |
+| Link | `{text}-link` | `view-all-server-link` |
+| Unread dot | Fixed value | `unread`; blinking version `flash-unread` |
+| Status indicator | `status-{state}` | `status-running` / `processing` / `stopped` / `warning` / `unknown` |
+| Tag component | Fixed value | `tag`; "+N" is `tag-more` |
+| Tag field and value | Special rule to avoid colliding with `tag` | `tag-field`, `tag-value` |
+| Tooltip text box | `role="tooltip"` | — |
+| Tooltip icon | `{owning element}-tooltip` | `test-connection-field-tooltip` |
+| Info box | `{title}-alert` | `key-pair-file-alert` |
+| Tags input | Fixed value; options can't take a testid | `tags-select` |
+| Badge (number or All) | Fixed value | `badge` |
+| JSON viewer | Fixed value | `json-view` |
+| Date Period | Fixed value | `date-period-select`, `date-period-option` |
+| Date Picker | Use placeholder | `placeholder="Start date"` / `"End date"` |
 
 ---
 
-## 7. 頁面模板（Base Pages）
+## 7. Page templates (Base Pages)
 
 ### 7.1 List Page
 
-| 元素 | testid |
+| Element | testid |
 |---|---|
-| 頁面標題 | `page-title` |
-| 表格欄位標題 | `tc-title-{欄位}` |
-| 表格欄位內容 | `tc-{欄位}` |
-| 列尾 More icon | `more-button` |
-| More 選單選項 | `option-edit`、`option-start`、`option-stop`、`option-remove` |
-| 匯出按鈕 | `{資源}-export-button` |
-| 建立按鈕 | `create-{資源}-button` 或 `add-{資源}-button` |
+| Page title | `page-title` |
+| Table column header | `tc-title-{column}` |
+| Table column content | `tc-{column}` |
+| Row-end More icon | `more-button` |
+| More menu options | `option-edit`, `option-start`, `option-stop`, `option-remove` |
+| Export button | `{resource}-export-button` |
+| Create button | `create-{resource}-button` or `add-{resource}-button` |
 
 ### 7.2 Detail Page
 
-| 元素 | testid |
+| Element | testid |
 |---|---|
-| 導航列：資產類型（連結） | `breadcrumb-link` |
-| 導航列：資產名稱 | `breadcrumb-name` |
-| 返回按鈕 | `back-icon-button` |
-| 頁面標題 | `page-title` |
-| 區塊標題 | `{區塊}-title`，例 `basic-info-title` |
-| 區塊編輯圖示 | `{區塊}-edit-button` |
-| 欄位標題 / 內容 | `{欄位}-field` / `{欄位}` |
-| Tag 標題 / 內容 / 單一 tag | `tags-field` / `tags` / `tag` |
+| Breadcrumb: asset type (link) | `breadcrumb-link` |
+| Breadcrumb: asset name | `breadcrumb-name` |
+| Back button | `back-icon-button` |
+| Page title | `page-title` |
+| Section title | `{section}-title`, e.g. `basic-info-title` |
+| Section edit icon | `{section}-edit-button` |
+| Field label / value | `{field}-field` / `{field}` |
+| Tags label / value / single tag | `tags-field` / `tags` / `tag` |
 
 ### 7.3 Modal
 
-Ant Design 的 Modal 容器無法穩定加 testid，改用 class 的 `contains` 比對：
+Ant Design Modal containers can't reliably take a testid, so match their classes with `contains`:
 
-| Modal 類型 | 容器 | 標題 | 內容 |
+| Modal type | Container | Title | Content |
 |---|---|---|---|
-| 一般 Modal | `pt-modal` | `ant-modal-title` | — |
+| Normal Modal | `pt-modal` | `ant-modal-title` | — |
 | Warning Modal | `pt-warning-modal` | `ant-modal-confirm-title` | `ant-modal-confirm-content` |
 | Info Modal | `pt-info-modal` | `ant-modal-confirm-title` | `ant-modal-confirm-content` |
 
-Modal 內的欄位仍照一般規則：`select-app-provider-field`。
+Fields inside a Modal still follow the normal rules: `select-app-provider-field`.
 
-### 7.4 其他常見結構
+### 7.4 Other common structures
 
-| 結構 | 規則 | 範例 |
+| Structure | Rule | Example |
 |---|---|---|
-| Tabs | `{名稱}-tab` | `connection-counts-tab` |
-| 步驟精靈 | `step-{步驟動作}` | `step-set-secret-content` |
-| Dashboard 區塊 | `{名稱}-area` | `connection-details-area` |
-| Dashboard 卡片 | `meta-{名稱}-area`，卡片內 `meta-title` / `meta-num` | `meta-members-area` |
-| 區塊內的通用元素 | 固定值，靠外層 `-area` 限定範圍 | `title`、`info`、`info-list`、`total-num`、`status` |
-| Header 下拉 | `{名稱}-select` / `{名稱}-select-option` | `project-select-option` |
-| 側邊選單 | `{名稱}-menu-item` | `system-policy-menu-item` |
+| Tabs | `{name}-tab` | `connection-counts-tab` |
+| Step wizard | `step-{step action}` | `step-set-secret-content` |
+| Dashboard section | `{name}-area` | `connection-details-area` |
+| Dashboard card | `meta-{name}-area`; inside the card `meta-title` / `meta-num` | `meta-members-area` |
+| Generic elements inside a section | Fixed values, scoped by the outer `-area` | `title`, `info`, `info-list`, `total-num`, `status` |
+| Header dropdown | `{name}-select` / `{name}-select-option` | `project-select-option` |
+| Side menu | `{name}-menu-item` | `system-policy-menu-item` |
 
 ---
 
-## 8. 範圍限定（Scoping）
+## 8. Scoping
 
-同一個 testid **可以**在不同容器重複出現，例如 `name-field` 出現在 Connect device / application / SFTP 三個 Modal，`page-title` 出現在每一頁，`title`、`info` 出現在每個 Dashboard 區塊。
+The same testid **may** appear in different containers, e.g. `name-field` in the Connect device / application / SFTP modals, `page-title` on every page, `title` and `info` in every dashboard section.
 
-使用規則：
-1. 測試時**先定位容器**（`-area`、Modal class、表格列），再往內找元素。
-2. 只有**全域唯一**的元素（Header、Menu）才可直接以 testid 查找。
-3. 表格內容 `tc-*` 每列都有，要搭配列索引或列內其他文字定位。
+Rules:
+1. In tests, **locate the container first** (`-area`, modal class, table row), then search inside it.
+2. Only **globally unique** elements (Header, Menu) may be found directly by testid.
+3. Table content `tc-*` appears in every row; combine it with a row index or other text in the row.
 
 ---
 
-## 9. 例外與特規
+## 9. Exceptions and special rules
 
-| 情況 | 處理 | 原因 |
+| Case | Handling | Reason |
 |---|---|---|
-| Tag 欄位 | 用 `tag-field` / `tag-value` 而非 `tag` | 與 Tag 元件的 `tag` 撞名 |
-| 稽核日誌分類欄 | 用 `tc-classification`、`tc-substance` | 刻意避開 `item`、`category` 等常見詞，降低未來撞名機率 |
-| Notification 列表 | 每個 item 用 `{project_name}`；內部為 `{type}`、`unread`、`event`、`date` | 需區分不同專案；`type` 為 `success` / `error` / `warning` / `info` |
-| 2FA OTP 輸入框 | 外層 `otp`；六格原用 `data-id` 0–5 | 後續版本已移除，需追蹤版本 |
-| 隱藏標題的表格 | 只標內容 `tc-*`，不標 `tc-title-*` | 畫面上沒有欄位標題 |
-| 無測試需求的按鈕 | 明確寫「不需 testid」 | 避免 FE 誤以為漏加 |
+| Tag field | Use `tag-field` / `tag-value` instead of `tag` | Collides with the Tag component's `tag` |
+| Audit log classification columns | Use `tc-classification`, `tc-substance` | Deliberately avoids common words like `item`, `category` to lower future collisions |
+| Notification list | Each item uses `{project_name}`; inside are `{type}`, `unread`, `event`, `date` | Projects must be distinguishable; `type` is `success` / `error` / `warning` / `info` |
+| 2FA OTP input | Outer `otp`; the six boxes originally used `data-id` 0–5 | Removed in a later version; track the version |
+| Table with hidden headers | Only label the content `tc-*`, not `tc-title-*` | There are no column headers on screen |
+| Buttons with no testing need | Write "no testid needed" explicitly | So FE doesn't think it was forgotten |
 
 ---
 
-## 10. 維護流程
+## 10. Maintenance process
 
-1. **一頁一份 wiki**：表格欄位固定為 `element | attribute | ref. | remark`。
-2. **共用規則用引用**：`ref.` 欄寫 `REF: Elements`、`Base Pages`，不重複定義。
-3. **狀態標註**：`remark` 欄使用固定標籤：
-   - `待FE補上`：規範已定，前端尚未實作
-   - `待FE修改`：前端已實作但不符規範
-   - `missing`：驗收時發現缺漏
-   - `vX.Y 新增 / 刪除 / 要追加`：與版本綁定的變更
-4. **文案變更同步**：畫面標題改名時，一併評估 testid 是否要改（例：Email → Email address）。
-5. **以 Epic 分組**：共用元件（epic）先定，再做各功能頁（group1、group2）。
+1. **One wiki page per screen**: the table columns are always `element | attribute | ref. | remark`.
+2. **Reference shared rules**: write `REF: Elements`, `Base Pages` in the `ref.` column instead of redefining them.
+3. **Status labels**: the `remark` column uses fixed labels:
+   - `FE to add`: the spec is set, the frontend hasn't implemented it
+   - `FE to fix`: implemented but doesn't follow the spec
+   - `missing`: found missing during acceptance
+   - `added / removed / to add in vX.Y`: changes tied to a version
+4. **Sync with copy changes**: when an on-screen label is renamed, check whether the testid should change too (e.g. Email → Email address).
+5. **Group by epic**: define shared components (epic) first, then each feature page (group1, group2).
 
 ---
 
-## 11. 踩過的坑（Lessons Learned）
+## 11. Lessons learned
 
-| 問題 | 實際案例 | 預防方式 |
+| Problem | Real case | Prevention |
 |---|---|---|
-| 屬性名稱不一致 | 文件與實作混用 `data_testid`、`date-testid` | 加 lint 規則或 CI 掃描，只允許 `data-testid` |
-| 拼字錯誤 | `tc-tiitle-member` | 用腳本比對 wiki 與原始碼中的 testid 清單 |
-| 同義詞命名不一致 | `back-icon-button` 標註「應統一」 | 維護後綴 / 前綴字典，新名稱先查表 |
-| 通用詞撞名 | `tag` 同時代表元件與欄位 | 保留字清單；通用詞加前後綴 |
-| 版本差異 | LDAP 按鈕在 v1.14 移除、OTP 六格在 v1.11 移除 | remark 必寫版本；測試依版本分支 |
-| FE 漏加 | 多個欄位標為 `待FE補上` | 把 testid 列入 PR checklist 與驗收條件 |
-| 框架元件無法加屬性 | Modal、Tags Select 選項 | 事先約定替代定位法並寫入規範 |
-| 重複 testid 導致誤抓 | 多個 Modal 都有 `name-field` | 強制先定位容器（第 8 節） |
+| Inconsistent attribute name | Docs and code mixed `data_testid`, `date-testid` | Add a lint rule or CI scan that only allows `data-testid` |
+| Typos | `tc-tiitle-member` | Script that compares the wiki and the testids in the source |
+| Inconsistent synonyms | `back-icon-button` marked "should be unified" | Keep the suffix / prefix dictionaries; check them before naming |
+| Generic words colliding | `tag` meant both the component and the field | Reserved-word list; add prefixes / suffixes to generic words |
+| Version differences | LDAP button removed in v1.14, the six OTP boxes removed in v1.11 | Always write the version in remark; branch tests by version |
+| FE forgot to add them | Several fields marked `FE to add` | Put testids on the PR checklist and in the acceptance criteria |
+| Framework components can't take attributes | Modal, Tags Select options | Agree on the alternative locator up front and write it into the spec |
+| Duplicate testids matched the wrong element | Several modals all have `name-field` | Always locate the container first (section 8) |
 
 ---
 
-## 12. 移植到 Android（Espresso / Compose）
+## 12. Porting to Android (Espresso / Compose)
 
-### 12.1 對照表
+### 12.1 Mapping
 
-| Web 做法 | Android View + Espresso | Jetpack Compose |
+| Web | Android View + Espresso | Jetpack Compose |
 |---|---|---|
 | `data-testid` | `android:id` → `withId(R.id.xxx)` | `Modifier.testTag("xxx")` → `onNodeWithTag` |
-| 文字定位 | `withText("Confirm")` | `onNodeWithText("Confirm")` |
+| Locate by text | `withText("Confirm")` | `onNodeWithText("Confirm")` |
 | `aria-label` | `contentDescription` → `withContentDescription` | `semantics { contentDescription = ... }` |
-| `placeholder` | `android:hint` → `withHint` | `onNodeWithText` 比對 placeholder |
-| 先定位容器 | `allOf(withId(..), isDescendantOfA(withId(..)))` | `onNode(hasTestTag(..) and hasAnyAncestor(..))` |
+| `placeholder` | `android:hint` → `withHint` | `onNodeWithText` matching the placeholder |
+| Locate the container first | `allOf(withId(..), isDescendantOfA(withId(..)))` | `onNode(hasTestTag(..) and hasAnyAncestor(..))` |
 | Ant Design Modal class | `inRoot(isDialog())` + `withText` | `onNode(isDialog())` |
-| 下拉選項 | `inRoot(isPlatformPopup())`、`onData` | `onNodeWithTag` |
-| 表格列 `tc-*` | `RecyclerViewActions` + `hasDescendant` | `onAllNodesWithTag(..)[index]` |
+| Dropdown options | `inRoot(isPlatformPopup())`, `onData` | `onNodeWithTag` |
+| Table rows `tc-*` | `RecyclerViewActions` + `hasDescendant` | `onAllNodesWithTag(..)[index]` |
 
-### 12.2 命名轉換
+### 12.2 Name conversion
 
-Android resource 名稱**不能包含 `-`**，所以 View 系統改用 snake_case，其餘規則不變：
+Android resource names **can't contain `-`**, so the View system uses snake_case; every other rule stays the same:
 
-| Web | Android View（`android:id`） | Compose（`testTag`） |
+| Web | Android View (`android:id`) | Compose (`testTag`) |
 |---|---|---|
-| `account-input` | `account_input` | `account-input` 或 `account_input` |
-| `tc-title-server-name` | `tc_title_server_name` | 同左擇一，全專案一致 |
+| `account-input` | `account_input` | `account-input` or `account_input` |
+| `tc-title-server-name` | `tc_title_server_name` | Pick one, consistent project-wide |
 | `option-edit` | `option_edit` | — |
 
-建議：Compose 也統一用 snake_case，讓兩套 UI 共用同一份命名表。
+Recommendation: use snake_case in Compose too, so both UI toolkits share one naming table.
 
-### 12.3 Android 特有注意事項
+### 12.3 Android-specific notes
 
-1. **ID 在同一個 layout 內要唯一**；跨 layout 可重複（例如每個 RecyclerView row 都有 `tc_server_name`），測試時靠 `isDescendantOfA` 或 `RecyclerViewActions` 限定範圍，否則會丟出 `AmbiguousViewMatcherException`。
-2. **文字定位要考慮多語系**：Web 專案可直接用英文文字，Android 若有多語系，測試應用 `withText(R.string.xxx)` 而不是寫死字串。
-3. **Toast 與 Snackbar** 不適合用 id，改用 `withText` 並搭配對應的 root matcher。
-4. **狀態燈號**建議加 `contentDescription`（如 `status_running`），同時兼顧無障礙與測試。
-5. 第 10 節的維護流程可直接沿用：一個畫面一份規範、`remark` 欄標註實作狀態與版本。
+1. **IDs must be unique within a layout**; they may repeat across layouts (e.g. every RecyclerView row has `tc_server_name`); scope tests with `isDescendantOfA` or `RecyclerViewActions`, otherwise you get `AmbiguousViewMatcherException`.
+2. **Text locators must handle localization**: the web project could use English text directly; on Android with multiple languages, tests should use `withText(R.string.xxx)` instead of hard-coded strings.
+3. **Toast and Snackbar** don't suit ids; use `withText` with the matching root matcher.
+4. **Status indicators** should get a `contentDescription` (e.g. `status_running`), which serves both accessibility and testing.
+5. The maintenance process in section 10 carries over as-is: one spec per screen, with implementation status and version in the `remark` column.

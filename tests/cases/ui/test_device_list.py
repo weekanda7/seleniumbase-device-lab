@@ -35,7 +35,7 @@ class DeviceListTest(AuthCase):
         DeviceListPage.assert_device_names(self, [name])
 
     def test_filter_by_status(self):
-        "[UI][Device list] 狀態篩選 Offline 只看到離線裝置，清除篩選後恢復"  # 🤝 AI
+        "[UI][Device list] Status filter Offline shows only offline devices; clearing the filter restores the list"
         prefix = uuid_name("flt")
         online, offline = f"{prefix}-on", f"{prefix}-off"
         self._create(online, "online")

@@ -9,7 +9,7 @@ pytestmark = pytest.mark.ui
 
 class VersionTest(NoAuthCase):
     def test_web_and_api_versions_match(self):
-        "[Version] 登入頁：Web 和 API 顯示同一個版本（前後端部署成同一版）"  # 🤝 AI
+        "[Version] Login page: Web and API show the same version (frontend and backend deployed together)"
         LoginPage.open(self)
         web, api = VersionInfo.read(self)
         assert web == api, f"web {web} != api {api}"

@@ -5,6 +5,6 @@ from pages.login.login_page import LoginPage
 
 class LoginTest(NoAuthCase):
     def test_login(self):
-        "[Login] 輸入 admin 帳密，並按下 Log button，登入成功"
+        "[Login] Enter the admin credentials and press Log in: login succeeds"
         LoginPage.login(self, Config.APP_USERNAME, Config.APP_PASSWORD)
         self.assert_element_present("//*[text()='Log out']")

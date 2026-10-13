@@ -1,14 +1,14 @@
-# Features（Gherkin 驗收條件 + 改動點）
+# Features (Gherkin acceptance criteria + touch points)
 
-格式：每個 feature = **AC（Gherkin）→ 後端 → 前端 → 改動注意**。
-Scenario 名稱就是測試名稱的來源（`test_<scenario snake_case>`），一個 scenario 對一個測試；
-標 `@api` 的在 API 層測、`@ui` 在 SeleniumBase 測、`@db` 要直接查 Postgres 驗證。
-背景資料：每次 `make down && make up` 後有 3 筆種子：
-`core-router-01`（Router, online, Server room）、`office-switch-01`（Switch, online, 3F office）、`lobby-ap-01`（AP, offline, 1F lobby）。
+Format: each feature = **AC (Gherkin) → backend → frontend → change notes**.
+The scenario name is the source of the test name (`test_<scenario snake_case>`), one scenario per test;
+`@api` is tested at the API layer, `@ui` with SeleniumBase, `@db` by querying Postgres directly.
+Background data: after every `make down && make up` there are 3 seed rows:
+`core-router-01` (Router, online, Server room), `office-switch-01` (Switch, online, 3F office), `lobby-ap-01` (AP, offline, 1F lobby).
 
 ---
 
-## F1 登入 / 登出
+## F1 Login / logout
 
 ```gherkin
 Feature: Login and logout
@@ -54,13 +54,13 @@ Feature: Login and logout
     And my old token is rejected with 401
 ```
 
-- **後端**：`auth_service.py`（帳密取自 `APP_USERNAME` / `APP_PASSWORD`；token 存在記憶體）、`routers.py::login / logout / require_token`
-- **前端**：`LoginPage.tsx`、`api.ts::auth`（token 在 sessionStorage）、`App.tsx::ProtectedLayout`；任何 401（登入 API 除外）→ 清 token、導回 `/login`
-- **改動注意**：token 在記憶體 → backend 重啟後全部失效、只能單一 worker；要多 worker 就改 JWT 或存 DB
+- **Backend**: `auth_service.py` (credentials from `APP_USERNAME` / `APP_PASSWORD`; tokens kept in memory), `routers.py::login / logout / require_token`
+- **Frontend**: `LoginPage.tsx`, `api.ts::auth` (token in sessionStorage), `App.tsx::ProtectedLayout`; any 401 (except the login API) → clear the token, redirect to `/login`
+- **Change notes**: tokens live in memory → all invalid after a backend restart, single worker only; for multiple workers switch to JWT or store them in the DB
 
 ---
 
-## F2 裝置列表（搜尋、篩選、排序、分頁）
+## F2 Device list (search, filter, sort, pagination)
 
 ```gherkin
 Feature: Device list
@@ -111,13 +111,13 @@ Feature: Device list
     And the second page shows 1 device
 ```
 
-- **後端**：`routers.py::list_devices`（`q` 最長 50、`status` 只能 online / offline）→ `repositories.py::list`（name / location `ILIKE`，依 id 排序）
-- **前端**：`DeviceListPage.tsx`；搜尋與狀態篩選打 API，**排序、類型篩選、分頁在前端**（只處理已載入的資料）
-- **改動注意**：資料量變大時要改成 server-side 分頁（`?page=&size=` + 回傳 total）；`q` 裡的 `%` / `_` 目前沒有跳脫，會被當萬用字元
+- **Backend**: `routers.py::list_devices` (`q` max 50, `status` only online / offline) → `repositories.py::list` (name / location `ILIKE`, ordered by id)
+- **Frontend**: `DeviceListPage.tsx`; search and status filter call the API, **sorting, type filter and pagination happen in the frontend** (only on loaded data)
+- **Change notes**: with more data, switch to server-side pagination (`?page=&size=` + return total); `%` / `_` in `q` are not escaped yet and act as wildcards
 
 ---
 
-## F3 新增裝置
+## F3 Add device
 
 ```gherkin
 Feature: Add a device
@@ -157,13 +157,13 @@ Feature: Add a device
       | a name longer than 50 characters           |
 ```
 
-- **後端**：`schemas.py::DeviceCreate`（去頭尾空白、1–50 字、type 列舉、status 預設 online、`extra="forbid"`）→ `device_service.py::create_device`（先查重名 → 409；DB unique 約束擋同時送出的競態）
-- **前端**：`DeviceNewPage.tsx` + `DeviceForm.tsx`；409 用 `form.setFields` 顯示在名稱欄位下，其他錯誤顯示紅色 Alert
-- **改動注意**：加欄位要同時改 model、`DeviceCreate` / `DevicePatch` / `DeviceOut`、`api.ts` 型別、`DeviceForm`、i18n 兩份、testid，並 `make down`
+- **Backend**: `schemas.py::DeviceCreate` (trimmed, 1–50 chars, type enum, status defaults to online, `extra="forbid"`) → `device_service.py::create_device` (checks for a duplicate name first → 409; a DB unique constraint covers the concurrent-submit race)
+- **Frontend**: `DeviceNewPage.tsx` + `DeviceForm.tsx`; a 409 is shown under the name field via `form.setFields`, other errors as a red Alert
+- **Change notes**: adding a field means changing the model, `DeviceCreate` / `DevicePatch` / `DeviceOut`, the `api.ts` types, `DeviceForm`, both i18n sets and the testids, then `make down`
 
 ---
 
-## F4 編輯裝置
+## F4 Edit device
 
 ```gherkin
 Feature: Edit a device
@@ -205,13 +205,13 @@ Feature: Edit a device
     Then the API responds 404
 ```
 
-- **後端**：`DeviceReplace`（PUT，全量）、`DevicePatch`（PATCH，只收有送的欄位、拒絕 null）→ `device_service.py::update_device`（改名才查重名）
-- **前端**：`DeviceEditPage.tsx` 用 **PATCH** 送整份表單；成功後到詳細頁。入口：列表 More → Edit、詳細頁 Basic info 的編輯圖示
-- **改動注意**：PUT 和 PATCH 的差別是面試常考點（冪等性：兩者都冪等，POST 不是），改的時候兩條 API scenario 都要保持綠
+- **Backend**: `DeviceReplace` (PUT, full), `DevicePatch` (PATCH, only fields sent, rejects null) → `device_service.py::update_device` (checks for duplicates only when renaming)
+- **Frontend**: `DeviceEditPage.tsx` sends the whole form with **PATCH**; on success goes to the detail page. Entry points: list More → Edit, the Basic info edit icon on the detail page
+- **Change notes**: PUT vs PATCH is a common interview question (idempotency: both are idempotent, POST isn't); keep both API scenarios green when changing them
 
 ---
 
-## F5 刪除裝置
+## F5 Delete device
 
 ```gherkin
 Feature: Delete a device
@@ -244,13 +244,13 @@ Feature: Delete a device
     Then the API responds 404
 ```
 
-- **後端**：`routers.py::delete_device` → `device_service.py::delete_device`（硬刪除）
-- **前端**：`useDeleteDevice.ts`（`modal.confirm` + `message.success`），列表與詳細頁共用；Modal 用 `.dl-warning-modal` 定位
-- **改動注意**：要改軟刪除（`deleted_at`）時，列表 / 取得 / 唯一約束都要一起改，並補 scenario
+- **Backend**: `routers.py::delete_device` → `device_service.py::delete_device` (hard delete)
+- **Frontend**: `useDeleteDevice.ts` (`modal.confirm` + `message.success`), shared by the list and the detail page; the modal is located via `.dl-warning-modal`
+- **Change notes**: switching to soft delete (`deleted_at`) means changing list / get / the unique constraint together, and adding scenarios
 
 ---
 
-## 裝置詳細
+## Device detail
 
 ```gherkin
 Feature: Device detail
@@ -276,12 +276,12 @@ Feature: Device detail
     Then I am on /devices/{id}/edit
 ```
 
-- **前端**：`DeviceDetailPage.tsx`（`GET /api/devices/{id}`）；刪除走 F5 的 `useDeleteDevice.ts`
-- **測試**：`tests/cases/ui/test_device_detail.py`（F5 的 Delete from the detail page / Cancel the dialog 也在這）
+- **Frontend**: `DeviceDetailPage.tsx` (`GET /api/devices/{id}`); delete goes through F5's `useDeleteDevice.ts`
+- **Tests**: `tests/cases/ui/test_device_detail.py` (F5's Delete from the detail page / Cancel the dialog live here too)
 
 ---
 
-## F6 中英切換
+## F6 Language switch (English / Chinese)
 
 ```gherkin
 Feature: Language switch
@@ -304,13 +304,13 @@ Feature: Language switch
     Then I can switch the language there too
 ```
 
-- **後端**：無（API 錯誤訊息是英文；前端遇到 401 / 409 會換成翻譯文字）
-- **前端**：`i18n.ts`（預設 en；選擇存在 localStorage）、`Root.tsx`（antd `ConfigProvider` locale 跟著切）、`LanguageSwitch.tsx`
-- **改動注意**：zhTW 物件的型別是 `typeof en`，少一個 key 會編譯失敗；測試用文字驗證時要先確定語言（建議測試開頭固定切到 en）
+- **Backend**: none (API error messages are English; the frontend replaces 401 / 409 with translated text)
+- **Frontend**: `i18n.ts` (default en; choice stored in localStorage), `Root.tsx` (antd `ConfigProvider` locale follows), `LanguageSwitch.tsx`
+- **Change notes**: the zhTW object is typed `typeof en`, so a missing key fails the build; tests that check text must pin the language first (switching to en at the start is recommended)
 
 ---
 
-## F7 版本顯示
+## F7 Version display
 
 ```gherkin
 Feature: Version info
@@ -328,7 +328,7 @@ Feature: Version info
     And the Web and API parts are the same
 ```
 
-- **後端**：`GET /api/version`（不用登入，同 `/health`）→ `VersionOut{version, commit}`，讀 env `APP_VERSION` / `GIT_SHA`（Dockerfile `ARG` → `ENV`）
-- **前端**：`components/VersionInfo.tsx`：Web 版本是 build 時注入（`VITE_APP_VERSION` / `VITE_GIT_SHA`），API 版本打 `/api/version`；放在登入頁和登入後 layout 的 footer
-- **版本來源**：只用 git tag（`git describe --tags --always`）。`make up`、CI、`images.yml` 會傳 build-arg；直接 `docker compose up` 顯示 `dev (unknown)`
-- **改動注意**：測試是黑箱、看不到 app 的 git → API 測格式；要驗確切版本時由部署流程設 `EXPECTED_VERSION`
+- **Backend**: `GET /api/version` (no login, like `/health`) → `VersionOut{version, commit}`, reads env `APP_VERSION` / `GIT_SHA` (Dockerfile `ARG` → `ENV`)
+- **Frontend**: `components/VersionInfo.tsx`: the Web version is injected at build time (`VITE_APP_VERSION` / `VITE_GIT_SHA`), the API version comes from `/api/version`; shown on the login page and in the footer of the logged-in layout
+- **Version source**: git tags only (`git describe --tags --always`). `make up`, CI and `images.yml` pass build args; a plain `docker compose up` shows `dev (unknown)`
+- **Change notes**: tests are black-box and can't see the app's git → the API test checks the format; to verify an exact version, the deploy pipeline sets `EXPECTED_VERSION`

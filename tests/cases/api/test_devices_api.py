@@ -9,7 +9,7 @@ class TestDevicesApi:
     """F3 at the API layer. No browser: fast, and safe with -n auto (unique names)."""
 
     def test_create_device_returns_201(self, api):
-        "[API][Add device] 建立裝置回 201，GET 回同一筆"  # 🤝 AI
+        "[API][Add device] Creating a device returns 201 and GET returns the same record"
         name = uuid_name("api")
         res = api.create(name=name, type="Sensor", status="offline", location="B1")
         assert res.status_code == 201, res.text
@@ -27,7 +27,7 @@ class TestDevicesApi:
         assert got.json()["name"] == name
 
     def test_duplicate_name_returns_409(self, api):
-        "[API][Add device] 名稱重複回 409，訊息帶名稱"  # 🤝 AI
+        "[API][Add device] Duplicate name returns 409 with the name in the message"
         name = uuid_name("api")
         first = api.create(name=name)
         assert first.status_code == 201, first.text
