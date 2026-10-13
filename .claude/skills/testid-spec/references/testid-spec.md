@@ -1,7 +1,7 @@
 # Test ID Spec
 
-> Source: the QA testid wiki of a past web project (React + Ant Design), 21 pages (Elements, Base Pages, Modals, each feature page).
-> This document turns its rules, conventions and lessons into a reusable spec, with a mapping to Android (Espresso / Compose) at the end.
+> Distilled from experience writing testid conventions for React + Ant Design web apps.
+> All names below are generic examples. A mapping to Android (Espresso / Compose) is at the end.
 
 ---
 
@@ -41,7 +41,7 @@ Not every element needs a testid. Choose in this order:
 | Case | All lowercase |
 | Separator | kebab-case (`-`) |
 | Language | English, taken from the on-screen English label |
-| Basic structure | `{subject}-{component type}`, e.g. `account-input`, `siem-connection-switch` |
+| Basic structure | `{subject}-{component type}`, e.g. `account-input`, `notification-switch` |
 | Exceptions | A few categories use a **prefix**, e.g. `option-edit`, `tc-server-name` (see section 5) |
 | Subject | The on-screen label in kebab-case: `Email address` → `email-address` |
 | Abbreviations | Common abbreviations are fine but must be consistent project-wide: `web-app`, `app-info`, `ip` |
@@ -54,11 +54,11 @@ Not every element needs a testid. Choose in this order:
 | Suffix | Meaning | Example |
 |---|---|---|
 | `-field` | A form field's **label** | `password-field` |
-| (no suffix) | A form field's **read-only value** | `credential-name`, `member-name` |
+| (no suffix) | A form field's **read-only value** | `owner-name`, `member-name` |
 | `-input` | Text input | `password-input` |
 | `-textarea` | Multi-line input | `reason-textarea` |
-| `-select` | The dropdown itself | `access-service-select` |
-| `-option` | A dropdown option (Select type) | `access-service-option` |
+| `-select` | The dropdown itself | `region-select` |
+| `-option` | A dropdown option (Select type) | `region-option` |
 | `-button` | Button / icon button | `back-icon-button`, `menu-button` |
 | `-edit-button` | Edit icon next to a section title | `basic-info-edit-button` |
 | `-export-button` | Export button on a list page, prefixed with the resource name | `device-export-button` |
@@ -68,12 +68,12 @@ Not every element needs a testid. Choose in this order:
 | `-switch` | Toggle | `two-factor-authentication-switch` |
 | `-tab` | Tab | `device-tab` |
 | `-title` | Section / form title | `basic-info-title` |
-| `-alert` | Info box (blue or grey description) | `security-alert` |
+| `-alert` | Info box (blue or grey description) | `info-alert` |
 | `-tooltip` | Tooltip trigger icon, prefixed with the element it belongs to | `new-password-field-tooltip` |
 | `-area` | A whole section container | `device-status-area` |
-| `-label` | Secondary label text | `trust-this-browser-label` |
-| `-img` | Image | `cis-login-footer-img` |
-| `-menu-item` | Side menu item | `audit-log-menu-item` |
+| `-label` | Secondary label text | `remember-me-label` |
+| `-img` | Image | `login-footer-img` |
+| `-menu-item` | Side menu item | `settings-menu-item` |
 
 The **field trio** is the most common pattern; a form field usually has all three:
 
@@ -113,18 +113,18 @@ The **field trio** is the most common pattern; a form field usually has all thre
 | Ordinary button | Text first; in special cases `{text}-button` | `connect-button` |
 | Icon button | `{function}-icon-button` or `{function}-button` | `back-icon-button` |
 | Select-all checkbox | `aria-label="Select all"` | — |
-| Checkbox | `{label}-checkbox` | `exact-match-url-checkbox` |
+| Checkbox | `{label}-checkbox` | `exact-match-checkbox` |
 | Radio (with text) | `{text}-radio` | `windows-radio` |
-| Radio (no text) | `{owning item}-radio` | `secret-radio` |
+| Radio (no text) | `{owning item}-radio` | `default-radio` |
 | Switch | `{label}-switch` | `alert-switch` |
-| Link | `{text}-link` | `view-all-server-link` |
+| Link | `{text}-link` | `view-all-link` |
 | Unread dot | Fixed value | `unread`; blinking version `flash-unread` |
 | Status indicator | `status-{state}` | `status-running` / `processing` / `stopped` / `warning` / `unknown` |
 | Tag component | Fixed value | `tag`; "+N" is `tag-more` |
 | Tag field and value | Special rule to avoid colliding with `tag` | `tag-field`, `tag-value` |
 | Tooltip text box | `role="tooltip"` | — |
-| Tooltip icon | `{owning element}-tooltip` | `test-connection-field-tooltip` |
-| Info box | `{title}-alert` | `key-pair-file-alert` |
+| Tooltip icon | `{owning element}-tooltip` | `port-field-tooltip` |
+| Info box | `{title}-alert` | `upload-file-alert` |
 | Tags input | Fixed value; options can't take a testid | `tags-select` |
 | Badge (number or All) | Fixed value | `badge` |
 | JSON viewer | Fixed value | `json-view` |
@@ -166,29 +166,29 @@ Ant Design Modal containers can't reliably take a testid, so match their classes
 
 | Modal type | Container | Title | Content |
 |---|---|---|---|
-| Normal Modal | `pt-modal` | `ant-modal-title` | — |
-| Warning Modal | `pt-warning-modal` | `ant-modal-confirm-title` | `ant-modal-confirm-content` |
-| Info Modal | `pt-info-modal` | `ant-modal-confirm-title` | `ant-modal-confirm-content` |
+| Normal Modal | `app-modal` | `ant-modal-title` | — |
+| Warning Modal | `app-warning-modal` | `ant-modal-confirm-title` | `ant-modal-confirm-content` |
+| Info Modal | `app-info-modal` | `ant-modal-confirm-title` | `ant-modal-confirm-content` |
 
-Fields inside a Modal still follow the normal rules: `select-app-provider-field`.
+Use one project prefix for these classes (this repo uses `dl-`). Fields inside a Modal still follow the normal rules: `provider-field`.
 
 ### 7.4 Other common structures
 
 | Structure | Rule | Example |
 |---|---|---|
-| Tabs | `{name}-tab` | `connection-counts-tab` |
-| Step wizard | `step-{step action}` | `step-set-secret-content` |
-| Dashboard section | `{name}-area` | `connection-details-area` |
+| Tabs | `{name}-tab` | `overview-tab` |
+| Step wizard | `step-{step action}` | `step-set-content` |
+| Dashboard section | `{name}-area` | `activity-area` |
 | Dashboard card | `meta-{name}-area`; inside the card `meta-title` / `meta-num` | `meta-members-area` |
 | Generic elements inside a section | Fixed values, scoped by the outer `-area` | `title`, `info`, `info-list`, `total-num`, `status` |
 | Header dropdown | `{name}-select` / `{name}-select-option` | `project-select-option` |
-| Side menu | `{name}-menu-item` | `system-policy-menu-item` |
+| Side menu | `{name}-menu-item` | `settings-menu-item` |
 
 ---
 
 ## 8. Scoping
 
-The same testid **may** appear in different containers, e.g. `name-field` in the Connect device / application / SFTP modals, `page-title` on every page, `title` and `info` in every dashboard section.
+The same testid **may** appear in different containers, e.g. `name-field` in several create / edit / import modals, `page-title` on every page, `title` and `info` in every dashboard section.
 
 Rules:
 1. In tests, **locate the container first** (`-area`, modal class, table row), then search inside it.
@@ -202,7 +202,7 @@ Rules:
 | Case | Handling | Reason |
 |---|---|---|
 | Tag field | Use `tag-field` / `tag-value` instead of `tag` | Collides with the Tag component's `tag` |
-| Audit log classification columns | Use `tc-classification`, `tc-substance` | Deliberately avoids common words like `item`, `category` to lower future collisions |
+| Log list columns | Use specific names like `tc-event-type` | Deliberately avoids common words like `item`, `category` to lower future collisions |
 | Notification list | Each item uses `{project_name}`; inside are `{type}`, `unread`, `event`, `date` | Projects must be distinguishable; `type` is `success` / `error` / `warning` / `info` |
 | 2FA OTP input | Outer `otp`; the six boxes originally used `data-id` 0–5 | Removed in a later version; track the version |
 | Table with hidden headers | Only label the content `tc-*`, not `tc-title-*` | There are no column headers on screen |
@@ -232,7 +232,7 @@ Rules:
 | Typos | `tc-tiitle-member` | Script that compares the wiki and the testids in the source |
 | Inconsistent synonyms | `back-icon-button` marked "should be unified" | Keep the suffix / prefix dictionaries; check them before naming |
 | Generic words colliding | `tag` meant both the component and the field | Reserved-word list; add prefixes / suffixes to generic words |
-| Version differences | LDAP button removed in v1.14, the six OTP boxes removed in v1.11 | Always write the version in remark; branch tests by version |
+| Version differences | A login button and an OTP input group were removed in later versions | Always write the version in remark; branch tests by version |
 | FE forgot to add them | Several fields marked `FE to add` | Put testids on the PR checklist and in the acceptance criteria |
 | Framework components can't take attributes | Modal, Tags Select options | Agree on the alternative locator up front and write it into the spec |
 | Duplicate testids matched the wrong element | Several modals all have `name-field` | Always locate the container first (section 8) |
