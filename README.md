@@ -38,9 +38,13 @@ flowchart LR
 
 | Layer | Marker | Tool | What it proves |
 |---|---|---|---|
-| UI | `ui` | SeleniumBase, Page Objects in `tests/pages/` | A user can log in, search, filter and add devices |
+| UI | `ui` | SeleniumBase, Page Objects in `tests/pages/` | A user can log in, search, filter, add, view and delete devices; the detail page uses deferred asserts so one run reports every wrong field |
 | API | `api` | `requests` | Status codes and response bodies (201, 409, …) |
 | DB | `db` | `psycopg` | What the API actually **persisted**, not just what it echoed back |
+
+**Specs in docstrings**
+
+Each test's docstring holds its Given / When / Then. The same text is the human-readable spec and the input for AI-driven runs (below); API shortcuts are written in parentheses, e.g. `(POST /api/devices -> 201)`.
 
 **Test data**
 
@@ -58,6 +62,27 @@ Because tests share no data and don't depend on order, the whole suite runs with
 - `AuthCase`: logs in through the API and puts the token into `sessionStorage`, so UI tests skip the login form.
 - Plain method overriding, no abstract classes. With only two subclasses this keeps it simple; the cost is that a subclass must remember to call `super()`.
 
+## AI-driven runs (gwt-run)
+
+An experiment: let an AI run a test case from its GWT docstring alone, through the [SeleniumBase MCP server](https://seleniumbase.io/mcp_servers/) (Pure CDP Mode, no WebDriver), and explain why it failed.
+
+```bash
+claude          # in the repo root; .mcp.json registers the seleniumbase MCP server
+/gwt-run tests/cases/ui/test_add_device.py::AddDeviceTest::test_duplicate_name --debug
+```
+
+How the skill (`.claude/skills/gwt-run/`) keeps the AI predictable:
+
+- **Spec only**: it reads the docstring, not the test code, and looks up request bodies in `/openapi.json`. Fields the GWT doesn't mention follow fixed value rules (default, else the first enum value).
+- **Fixed check methods**: one way to check text, URL and API results, so two runs can't take different paths.
+- **Verdicts**: PASS / FAIL (the behaviour is wrong) / BLOCKED (the check itself broke), plus a screenshot fallback that is reported but never counts as PASS.
+- **Triage** (`references/triage.md`): every non-PASS step is classified in order as environment → testid → test bug → product bug → unknown, with evidence. The product spec (Gherkin in `features.md`, OpenAPI) is the judge, so a wrong GWT and a broken app are told apart.
+- **`--debug`**: writes the raw tool output, URL and DOM for each non-PASS step to `tests/report/gwt/`, so someone else can debug without rerunning.
+
+What about ten runs of one case showed: at first the AI saw the same facts and returned PASS once and FAIL once. Each fix narrowed the source of the variance (verdict rules → check method → selector → antd's enter animation) until two runs in a row matched. Both triage scenarios were classified correctly: a wrong expected text in the GWT (test bug, citing the `features.md` line) and a stopped backend (environment: 502 and `/api/version` down).
+
+Trade-off: it is slower and costs tokens, and judgement varies wherever the rules are silent. Regression stays with the pytest suite; the AI is for acceptance runs and first-pass triage of failures.
+
 ## Run it
 
 Requires Docker and [uv](https://docs.astral.sh/uv/).
@@ -71,6 +96,8 @@ uv run pytest -m "api or db"              # no browser needed
 cd .. && make down                        # stop and wipe the DB (next `up` starts from 3 seed devices)
 ```
 
+AI-driven run of one case (needs Claude Code; see above): `/gwt-run <pytest node id> [--debug]`.
+
 Reports: `tests/report/report.html` (pytest-html) and `report.xml` (JUnit).
 
 | URL | What |
@@ -81,7 +108,7 @@ Reports: `tests/report/report.html` (pytest-html) and `report.xml` (JUnit).
 
 ## CI
 
-`.github/workflows/ci.yml` runs two jobs on every push and pull request:
+`.github/workflows/ci.yml` runs five jobs on every push and pull request:
 
 1. **lint**: ruff (backend, tests) and ESLint / Prettier (frontend).
 2. **tests-image**: test runner image tagged `deps-<hash of pyproject.toml + uv.lock>`; rebuilt only when dependencies change (test code is mounted by checkout, not baked in).
@@ -109,8 +136,14 @@ tests/
   db_client/        read-only Postgres queries
   cases/{ui,api,db} the tests; cases/conftest.py has the `api` fixture
   Dockerfile        test runner image (deps only; code is mounted)
+  report/gwt/       gwt-run debug logs and screenshots (git-ignored)
 scripts/
   publish-report.sh CI only: publishes the report to gh-pages (refuses to run outside GitHub Actions)
+.claude/skills/
+  device-lab-dev/   app development rules + Gherkin acceptance criteria (features.md)
+  testid-spec/      data-testid naming rules and this repo's mapping table
+  gwt-run/          AI-driven GWT runs through the seleniumbase MCP + triage rules
+.mcp.json           registers the seleniumbase MCP server for Claude Code
 docker-compose.yml
 .github/workflows/ci.yml       lint → images → tests (container + services) → pages
 .github/workflows/images.yml   release: git tag vX.Y.Z → multi-arch images on GHCR
@@ -135,4 +168,7 @@ What this demo does on purpose, and what a production setup would change:
 - **TypeScript test layer**: component tests (Vitest) or a Playwright TS e2e for the React frontend.
 - **Test management**: push results from `report.xml` (JUnit) to TestRail, so each run maps to test cases and runs there.
 - **Cross-browser / real devices**: run the same suite on BrowserStack through its Selenium hub (`--server` / `--port` plus capabilities), no code changes in the tests.
-- **Allure Report with history**: trends (pass rate, duration, retries), flaky detection and failure categories (product bug vs test bug) across runs, published next to the pytest-html reports on `gh-pages`.
+- **Allure Report with history**: trends (pass rate, duration, retries) and flaky detection across runs, with gwt-run's triage results feeding Allure categories; published next to the pytest-html reports on `gh-pages`.
+- **gwt-run for every case**: GWT docstrings for the whole suite.
+- **Fake-pass detection**: run a case both ways (pytest and gwt-run); a script PASS with a gwt-run FAIL means the script doesn't check what the GWT says.
+- **Test maintenance check**: run gwt-run on a schedule to catch tests that drifted from the product (test bugs, testid drift) before they rot.
