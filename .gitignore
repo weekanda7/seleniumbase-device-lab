@@ -24,3 +24,5 @@ last_report.html
 .idea/
 .vscode/
 .DS_Store
+# Claude Code per-user settings
+.claude/settings.local.json

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "seleniumbase": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--directory", "tests", "--group", "mcp", "seleniumbase-mcp"]
+    }
+  }
+}

@@ -22,3 +22,8 @@ markers = [
     "db: tests that query Postgres on :5433 directly",
 ]
 pythonpath = ["."]
+
+[dependency-groups]
+mcp = [
+    "seleniumbase[mcp]>=4.54.13",
+]
