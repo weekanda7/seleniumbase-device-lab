@@ -47,6 +47,8 @@ argument-hint: tests/cases/ui/test_xxx.py::Class::test_name [--debug]
 - ⚠️ **BLOCKED**：**檢查方式**有問題（元素找不到、spec 不清楚），無法確認行為對不對；除了下面的截圖備案，不要自己改用別的方式判 PASS 或 FAIL
 - 🟡 **PASS（截圖）**：固定方法 BLOCKED，但截圖上看得到預期結果（可信度較低，只當旁證）
 
+**判因**：有任何一步不是 PASS，就讀 [references/triage.md](references/triage.md)，照它的順序替每個非 PASS 步驟判因並附證據。
+
 總結果：全部 PASS → PASS；有 FAIL → FAIL；沒有 FAIL 但有 BLOCKED 或 🟡 → BLOCKED（🟡 不算 PASS，只是告訴人「app 大概是對的，壞的是檢查方式」）。
 
 ## 規則
@@ -70,9 +72,9 @@ argument-hint: tests/cases/ui/test_xxx.py::Class::test_name [--debug]
 - 沒有 `--debug` 就不記錄這些
 
 ## 回報格式（只在對話裡顯示）
-| # | GWT 行 | 結果 | 預期 | 實際 |
-|---|---|---|---|---|
-| 1 | Given 已登入… | ✅ | … | … |
+| # | GWT 行 | 結果 | 預期 | 實際 | 判因 | 證據 |
+|---|---|---|---|---|---|---|
+| 1 | Given 已登入… | ✅ | … | … | — | — |
 
 再列一行「**自己補的值**」：照選值規則補上的欄位和值（例：`type=Router（enum 第一個）`）。
 
