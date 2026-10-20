@@ -3,6 +3,8 @@ name: device-lab-dev
 description: Development rules for seleniumbase-device-lab (layered FastAPI + React/antd). Use before adding or changing any feature, API, page or field in backend/ or frontend/; covers layering rules, the contract-first flow, REST conventions, the Definition of Done, and the Gherkin acceptance criteria for existing features (login, list, add, edit, delete, language switch).
 ---
 
+> Entry index: `.claude/skills/index/SKILL.md` — where each kind of question is answered in this repo.
+
 # device-lab-dev
 
 Read this before changing the app. Each feature's acceptance criteria (Gherkin) and touch points are in `references/features.md`; testid naming is in the `testid-spec` skill.

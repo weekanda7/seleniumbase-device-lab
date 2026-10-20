@@ -5,6 +5,8 @@ disable-model-invocation: true
 argument-hint: tests/cases/ui/test_xxx.py::Class::test_name [--debug]
 ---
 
+> Entry index: `.claude/skills/index/SKILL.md` — where each kind of question is answered in this repo.
+
 # gwt-run (POC v0)
 
 Case to run: `$ARGUMENTS` (if it ends with `--debug`, turn on debug mode, see below)

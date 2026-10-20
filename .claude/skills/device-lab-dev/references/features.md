@@ -1,5 +1,7 @@
 # Features (Gherkin acceptance criteria + touch points)
 
+> Entry index: `.claude/skills/index/SKILL.md` — where each kind of question is answered in this repo.
+
 Format: each feature = **AC (Gherkin) → backend → frontend → change notes**.
 The scenario name is the source of the test name (`test_<scenario snake_case>`), one scenario per test;
 `@api` is tested at the API layer, `@ui` with SeleniumBase, `@db` by querying Postgres directly.

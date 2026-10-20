@@ -1,5 +1,7 @@
 # seleniumbase-device-lab
 
+> Entry index: `.claude/skills/index/SKILL.md` — where each kind of question is answered in this repo.
+
 [![CI](https://github.com/weekanda7/seleniumbase-device-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/weekanda7/seleniumbase-device-lab/actions/workflows/ci.yml)
 
 A small device-management web app (FastAPI + PostgreSQL + React) **and** a black-box test suite for it:

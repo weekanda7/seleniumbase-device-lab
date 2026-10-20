@@ -3,6 +3,8 @@ name: testid-spec
 description: data-testid naming rules (React + Ant Design). Use when adding or changing any UI element in frontend/src, or when writing SeleniumBase locators / Page Objects, so testids are derivable, stable and consistent across the project.
 ---
 
+> Entry index: `.claude/skills/index/SKILL.md` — where each kind of question is answered in this repo.
+
 # testid-spec
 
 Follow this when adding testids in the frontend or locating elements in tests. The full spec (with cases, pitfalls, Android comparison) is in `references/testid-spec.md`; this is the short version + this repo's mapping table.
